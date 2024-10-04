@@ -7,13 +7,33 @@ coordinates of retention time, *m/z* ratio, and intensity.
 Existing data formats fail to provide intuitive, rapid, and programmatic search of raw MS data and require learning
 the quirks and conceits of idiosyncratic file formats. Databases have
 consistent and transferrable syntax for queries, indexing and binary search for rapid data extraction,
-benefit from multi-file aggregations of data, and are established as an industry standard.
+benefit from multi-file aggregations of data, can store processed data alongside, and are established as an industry standard.
 
 ### Consistent and transferrable syntax
 
 SQL is widely known and understood. Transforming MS data into a format that can be queried using SQL allows
 developers to focus on building downstream products instead of comprehending the particulars of a given
-file type.
+file type. SQL also often results in queries much closer to natural language - compare 
+
+```SELECT * FROM MS1 WHERE rt BETWEEN 5 AND 6```
+
+to
+
+```import matplotlib.pyplot as plt
+from pyteomics import mzml
+import numpy as np
+
+mz_values = []
+retention_times = []
+int_values = []
+with mzml.MzML(file) as reader:
+    for spectrum in reader:
+        if spectrum['ms level'] == 1:
+            mz_values.extend(spectrum['m/z array'])
+            mz_values.extend(spectrum['intensity array'])
+            rt = spectrum['scanList']['scan'][0]['scan start time']
+            retention_times.extend([rt] * len(spectrum['m/z array']))
+```
 
 ### Indexing and binary search for rapid data extraction
 
@@ -30,6 +50,16 @@ identifier can be simply encoded as an additional column and the entire dataset 
 together, allowing for rapid searches across every file simultaneously. Without this, MS datasets
 increase linearly in time with the number of files in the dataset as each file is looped over
 one at a time.
+
+### Can store processed data alongside
+
+After chromatographic peakpicking or compound identification has been performed, the resulting
+peak list (start_rt, end_rt, mean_mz, area, etc.) can be stored as an additional table in the
+database. Not only does this make it easy to share all the data (often a single .sql file or 
+database connection instead of multiple mzMLs and CSVs), but it also allows for powerful
+join operations between the raw and processed data that enable rapid extraction of the
+individual data points that compose a chromatographic peak. Additionally, metadata or corrected
+retention times similarly benefit from simple and powerful joins that minimize memory usage.
 
 ### Established as an industry standard
 
