@@ -73,3 +73,23 @@ of experts rather than individual developers who may leave the project and resul
 1. Determine when and how databases offer a performance improvement over existing MS file types
 2. Explore multiple database types and provide use-case recommendations for each
 3. Provide code that allows for the elegant conversion of existing MS data into database
+
+## Existing formats for comparison:
+
+| Format | Publication | Year | Interface | In msconvert? | m/z values searchable? | Written/examples in | Notes |
+| --- | --- | --- | --- | --- | --- | --- | ---
+| mzML | [Link](https://www.mcponline.org/article/S1535-9476(20)31387-6/fulltext) | 2010 | XML | Yes | No | Many | |
+| mzRTree | [Link](dx.doi.org/10.1016/j.jprot.2010.02.006) | 2010 | Tree | No | ? | Java | |
+| YAFMS | [Link](dx.doi.org/10.1016/j.jasms.2010.06.014) | 2010 | SQL | No | No | C# | Deprecated? |
+| mz5 | [Link](dx.doi.org/10.1074/mcp.O111.011379) | 2012 | HDF5 | Yes | ? | ? | |
+| mzDB | [Link](dx.doi.org/10.1074/mcp.O114.039115) | 2015 | SQL | No | Yes? | Java, C++ | |
+| Indexed mzML | [Link](dx.doi.org/10.1371/journal.pone.0125108) | 2015 | XML | Yes | No | C++, Python | |
+| MzTree | [Link](dx.doi.org/10.1371/journal.pone.0188059) | 2017 | SQLite, Tree | No | Yes? | Java | |
+| Toffee | [Link](dx.doi.org/10.1038/s41598-020-65015-y) | 2020 | HDF5(?) | No | Yes? | Python | Only for TOF data? |
+| mzMLb | [Link](dx.doi.org/10.1021/acs.jproteome.0c00192) | 2021 | XML | Yes | No | Python | |
+| Aird | [Link](dx.doi.org/10.1186/s12859-021-04490-0) | 2022 | Unique | No | C# | |
+| mzMD | [Link](dx.doi.org/10.1093/bioinformatics/btac098) | 2022 | SQL | No | ? | Java | |
+| MZA | [Link](dx.doi.org/10.1021/acs.jproteome.2c00313) | 2023 | HDF5 | No | Yes? | Python | Separate Python package [here](dx.doi.org/10.1021/acs.analchem.3c01653)
+
+Not mentioned above: mzData, mzXML, Shaduf, imzML, others?
+
