@@ -1,0 +1,8 @@
+.git_pwd
+*.duckdb
+*.mzML
+*.mzMLb
+*.sqlite
+*.sql
+
+
