@@ -15,3 +15,20 @@ He has extensive knowledge both in programming and in the use of existing file f
 4.
 
 5.
+
+
+Use Cases
+1.
+User: inputs file for conversion.
+System: Converts file to new sql dataframe style.
+Implied: Ensures that the file is not corrupt, and follows the expected format 
+Implied: has a user interface to load/interact files
+
+2.
+User: inputs request for specific data section. I.e. outputs above a certain magnitude only.
+System: Computes and returns the selection of outputs that meet the requirement.
+Implied: 
+Implied: 
+
+
+
