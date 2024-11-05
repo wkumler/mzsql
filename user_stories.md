@@ -32,3 +32,12 @@ Implied:
 
 
 
+
+Component specification
+
+  - Database!
+    - MS1 table
+    - MS2 table
+  - Manuscript draft?
+  - Vignettes?
+
