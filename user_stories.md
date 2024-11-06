@@ -1,16 +1,11 @@
 User Stories (For Class Purposes)
 
-1.
-Trish is a student, using mass spectrometry data for her capstone project. She is wants to use this data for _____.
-She is looking for an easy way to sort through large quantites of data from a variety of file formats. She specifically does not want to deal with keeping track off all the 
+1. Trish is a student, using mass spectrometry data for her capstone project. She is wants to use this data for _____. She is looking for an easy way to sort through large quantites of data from a variety of file formats. She specifically does not want to deal with keeping track off all the 
 differences between file formats. She has a limited knowledge of programming, with only a couple of classes years ago.
 
-2.
-Karl is a reasearcher in _____ industry. He uses mass spectrometry data to find ______. He wants a fast and consistant method of filtering data, with an empahsis on 
-forward compatibility. Karl is interested in making it easier to work with others, who work with different file formats.
-He has extensive knowledge both in programming and in the use of existing file formats.
+2. Karl is a researcher in medicine. He uses mass spectrometry data to find new drugs. He wants a fast and consistant method of filtering data, with an emphasis on forward compatibility. Karl is interested in making it easier to work with others, who work with different file formats. He has extensive knowledge both in programming and in the use of existing file formats.
 
-3.
+3. Laura is a professor of an environmental omics lab. She's accumulated years of MS data and wants to scan through all of it quickly and concisely but the current storage format is slow and memory-intensive to scan through. She's got some exposure to R and Python from her students but doesn't want to learn the details of any particular language.
 
 4.
 
