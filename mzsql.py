@@ -29,7 +29,8 @@ def get_chrom_mzml(file, mz, ppm):
     return(pd.concat(scan_dfs, ignore_index=True))
 
 def get_spectrum_mzml(file, spectrum_idx):
-    mzml.MzML(file)[spectrum_idx]
+    scan_data = mzml.MzML(file)[spectrum_idx]
+    pd.DataFrame({"mz":scan_data["m/z array"], "int":scan_data["intensity array"]})
 
 def get_rtrange_mzml(file, rtstart, rtend):
     raise Exception("mzML rtrange extraction yet implemented")
