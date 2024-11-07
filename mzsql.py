@@ -29,21 +29,21 @@ def get_chrom_mzml(file, mz, ppm):
     return(pd.concat(scan_dfs, ignore_index=True))
 
 def get_spectrum_mzml(file, spectrum_idx):
-    raise Exception("mzML spectrum extraction yet implemented")
+    mzml.MzML(file)[spectrum_idx]
 
 def get_rtrange_mzml(file, rtstart, rtend):
     raise Exception("mzML rtrange extraction yet implemented")
 
 
 # Indexed mzML things
-def get_chrom_mzml_idx(file, mz, ppm):
+def get_chrom_mzml_idx(idx_file, mz, ppm):
     get_chrom_mzml(file, mz, ppm)
 
-def get_spectrum_mzml_idx(file, spectrum_idx):
+def get_spectrum_mzml_idx(idx_file, spectrum_idx):
     # I think this one should be fancier than for default mzML extraction bc index exists but pyteomics should handle it well
-    raise Exception("Indexed mzML spectrum extraction yet implemented")
+    mzml.MzML(file)[100]
 
-def get_rtrange_mzml_idx(file, rtstart, rtend):
+def get_rtrange_mzml_idx(idx_file, rtstart, rtend):
     raise Exception("Indexed mzML rtrange extraction yet implemented")
 
 
