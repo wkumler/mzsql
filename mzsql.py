@@ -152,12 +152,12 @@ import pandas as pd
 import sqlite3
 import pandas as pd
 
-def turn_mzml_sqlite(file):
+def turn_mzml_sqlite(file, outfile):
     #converts mzml file to sqlite database. Here for reference, and to show change for row id
-    conn = sqlite3.connect("msdata.sqlite")
+    conn = sqlite3.connect(outfile)
     for spectrum in mzml.MzML(file):
         if spectrum['ms level'] == 1:
-            print(spectrum["index"])
+            #print(spectrum["index"])
             idx = "index"
             mz_vals=spectrum['m/z array']
             int_vals = spectrum['intensity array']
@@ -165,6 +165,7 @@ def turn_mzml_sqlite(file):
             df_scan = pd.DataFrame({'id':idx,'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
             df_scan.to_sql("MS1", conn, if_exists="append", index=False)
 conn.close()
+    return
 
 def get_chrom_sqlite(file, mz, ppm):
     #returns the chromatogram from the given file. 
