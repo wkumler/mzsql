@@ -5,4 +5,5 @@
 *.sqlite
 *.sql
 
-
+.ipynb_checkpoints
+__*
