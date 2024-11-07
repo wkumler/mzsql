@@ -145,14 +145,59 @@ def get_rtrange_mza(file, rtstart, rtend):
 
 # SQLite things
 # Note - can be parallelized across files so the syntax may differ slightly
+import sqlite3
+import pandas as pd
+
+import sqlite3
+import pandas as pd
+
+def turn_mzml_sqlite(file):
+    #converts mzml file to sqlite database. Here for reference, and to show change for row id
+    conn = sqlite3.connect("msdata.sqlite")
+    for spectrum in mzml.MzML(file):
+        if spectrum['ms level'] == 1:
+            print(spectrum["index"])
+            idx = "index"
+            mz_vals=spectrum['m/z array']
+            int_vals = spectrum['intensity array']
+            rt_val = spectrum['scanList']['scan'][0]['scan start time']
+            df_scan = pd.DataFrame({'id':idx,'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
+            df_scan.to_sql("MS1", conn, if_exists="append", index=False)
+conn.close()
+
 def get_chrom_sqlite(file, mz, ppm):
-    raise Exception("SQLite spectrum extraction yet implemented")
+    #returns the chromatogram from the given file. 
+    #Uses mz and ppm to find mz range that will be rturned.
+    
+    mz_min, mz_max = pmppm(mz, ppm)
+    
+    conn = sqlite3.connect(file)
+    query = f"SELECT * FROM MS1 WHERE mz BETWEEN {mz_min} AND {mz_max}"
+    query_data = pd.read_sql_query(query, conn)
+    
+    conn.close()
+    return query_data
 
 def get_spectrum_sqlite(file, spectrum_idx):
-    raise Exception("SQLite spectrum extraction yet implemented")
+    #return a single spectrum according to ID
+    conn = sqlite3.connect(file)
+
+    query = f"SELECT * FROM MS1 WHERE id = {spectrum_idx}"
+    spectrum_data = pd.read_sql_query(query, conn)
+
+    conn.close()
+    
+    return spectrum_data
 
 def get_rtrange_sqlite(file, rtstart, rtend):
-    raise Exception("SQLite rtrange extraction yet implemented")
+    #return table between rtstart and rtend:
+    conn = sqlite3.connect(file)
+    query = f"SELECT * FROM MS1 WHERE rt >= {rtstart} AND rt <= {rtend}"
+    rt_range_data = pd.read_sql_query(query, conn)
+    
+    conn.close()
+    
+    return rt_range_data
 
 
 
