@@ -22,7 +22,7 @@ def get_chrom_mzml_pyteomics(file, mz, ppm):
         rt_val = spectrum['scanList']['scan'][0]['scan start time']
         mz_vals=spectrum['m/z array']
         int_vals = spectrum['intensity array']
-        bet_idxs = (spectrum["m/z array"]>mzmin) & (spectrum["m/z array"]<mzmax)
+        bet_idxs = (mzmin < spectrum["m/z array"]) & (spectrum["m/z array"] < mzmax)
         if(sum(bet_idxs)>0):
             df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
             scan_dfs.append(df_scan)    
@@ -35,7 +35,7 @@ def get_chrom_mzml_pyopenms(file, mz, ppm):
     for spectrum in exp:
         rt_val = spectrum.getRT()
         mz_vals, int_vals = spectrum.get_peaks()
-        bet_idxs = (mz_vals>mzmin) & (mz_vals<mzmax)
+        bet_idxs = mzmin < mz_vals < mzmax
         if(sum(bet_idxs)>0):
             df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
             scan_dfs.append(df_scan)    
@@ -48,7 +48,7 @@ def get_chrom_mzml_pymzml(file, mz, ppm):
         rt_val = spectrum.scan_time_in_minutes()
         mz_vals = spectrum.mz
         int_vals = spectrum.i
-        bet_idxs = (mz_vals>mzmin) & (mz_vals<mzmax)
+        bet_idxs = mzmin < mz_vals < mzmax
     
         if(sum(bet_idxs)>0):
             df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
@@ -107,7 +107,7 @@ def get_rtrange_mzml_pymzml(file, rtstart, rtend):
     scan_dfs = []
     for spectrum in run:
         rt_val = spectrum.scan_time_in_minutes()
-        if(rtstart<rt_val<rtend):
+        if(rtstart < rt_val < rtend):
             df_scan = pd.DataFrame({'mz':spectrum.mz, 'int':spectrum.i, 'rt':[rt_val]*len(spectrum.i)})
             scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
@@ -122,21 +122,35 @@ def get_rtrange_mzml_pyopenms_2DPeak(file, rtstart, rtend):
 
 
 
-
-def get_rtrange_mzml(file, rtstart, rtend):
-    raise Exception("mzML rtrange extraction yet implemented")
-
-
 # Indexed mzML things --------------------------------------------------------------------------
 def get_chrom_mzml_idx(idx_file, mz, ppm):
-    get_chrom_mzml(file, mz, ppm)
+    mzmin, mzmax = pmppm(mz, ppm)
+    scan_dfs = []
+    for spectrum in mzml.PreIndexedMzML(idx_file):
+        rt_val = spectrum['scanList']['scan'][0]['scan start time']
+        mz_vals=spectrum['m/z array']
+        int_vals = spectrum['intensity array']
+        bet_idxs = (mzmin < spectrum["m/z array"]) & (spectrum["m/z array"] < mzmax)
+        if(sum(bet_idxs)>0):
+            df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
+            scan_dfs.append(df_scan)    
+    return(pd.concat(scan_dfs, ignore_index=True))
 
-def get_spectrum_mzml_idx(idx_file, spectrum_idx):
-    # I think this one should be fancier than for default mzML extraction bc index exists but pyteomics should handle it well
-    mzml.MzML(file)[100]
+def get_spec_mzml_idx(idx_file, scan_num):
+    file_data = mzml.PreIndexedMzML(idx_file)
+    return(pd.DataFrame({"mz":file_data[scan_num]['m/z array'], "int":file_data[scan_num]['intensity array']}))
+
 
 def get_rtrange_mzml_idx(idx_file, rtstart, rtend):
-    raise Exception("Indexed mzML rtrange extraction yet implemented")
+    scan_dfs = []
+    for spectrum in mzml.PreIndexedMzML(idx_file):
+        rt_val = spectrum['scanList']['scan'][0]['scan start time']
+        if(rtstart < rt_val < rtend):
+            mz_vals=spectrum['m/z array']
+            int_vals = spectrum['intensity array']
+            df_scan = pd.DataFrame({'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
+            scan_dfs.append(df_scan)    
+    return(pd.concat(scan_dfs, ignore_index=True))
 
 
 
@@ -150,17 +164,27 @@ def get_chrom_mzmlb(file, mz, ppm):
             int_vals = spectrum['intensity array']
 
             mzmin, mzmax = pmppm(mz, ppm)
-            bet_idxs = (spectrum["m/z array"]>mzmin) & (spectrum["m/z array"]<mzmax)
+            bet_idxs = (mzmin < spectrum["m/z array"]) & (spectrum["m/z array"] < mzmax)
             if(sum(bet_idxs)>0):
                 df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
                 scan_dfs.append(df_scan)    
     return(pd.concat(scan_dfs, ignore_index=True))
 
-def get_spectrum_mzml(file, spectrum_idx):
-    raise Exception("mzMLb spectrum extraction yet implemented")
+def get_spec_mzmlb(file, scan_num):
+    file_data = mzmlb.MzMLb(file)
+    return(pd.DataFrame({"mz":file_data[scan_num]['m/z array'], "int":file_data[scan_num]['intensity array']}))
 
-def get_rtrange_mzml(file, rtstart, rtend):
-    raise Exception("mzMLb rtrange extraction yet implemented")
+
+def get_rtrange_mzmlb(file, rtstart, rtend):
+    scan_dfs = []
+    for spectrum in mzmlb.MzMLb(file):
+        rt_val = spectrum['scanList']['scan'][0]['scan start time']
+        if(rtstart < rt_val < rtend):
+            mz_vals=spectrum['m/z array']
+            int_vals = spectrum['intensity array']
+            df_scan = pd.DataFrame({'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
+            scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
 
 
 
