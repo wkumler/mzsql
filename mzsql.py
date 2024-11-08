@@ -91,6 +91,9 @@ def get_rtrange_mzml_pyteomics(file, rtstart, rtend):
             scan_dfs.append(df_scan)    
     return(pd.concat(scan_dfs, ignore_index=True))
 def get_rtrange_mzml_pyopenms(file, rtstart, rtend):
+    exp = pyopenms.MSExperiment()
+    pyopenms.MzMLFile().load(file, exp)
+    exp.updateRanges()
     scan_dfs = []
     for spectrum in exp:
         rt_val = spectrum.getRT()
@@ -112,7 +115,7 @@ def get_rtrange_mzml_pyopenms_2DPeak(file, rtstart, rtend):
     exp = pyopenms.MSExperiment()
     pyopenms.MzMLFile().load(file, exp)
     exp.updateRanges()
-    rtrange_data=exp.get2DPeakDataLong(min_mz=exp.getMinMZ(), max_mz=exp.getMaxMZ(), min_rt=rtstart, max_rt=rtend)
+    rtrange_data=exp.get2DPeakDataLong(min_mz=exp.getMinMZ(), max_mz=exp.getMaxMZ(), min_rt=rtstart*60, max_rt=rtend*60)
     return(pd.DataFrame({"rt":rtrange_data[0], "mz":rtrange_data[1], "int":rtrange_data[2]}))
 
 
@@ -252,7 +255,7 @@ def turn_mzml_sqlite(file):
             rt_val = spectrum['scanList']['scan'][0]['scan start time']
             df_scan = pd.DataFrame({'id':idx,'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
             df_scan.to_sql("MS1", conn, if_exists="append", index=False)
-conn.close()
+    conn.close()
 
 def get_chrom_sqlite(file, mz, ppm):
     #returns the chromatogram from the given file. 
