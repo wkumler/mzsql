@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pyteomics import mzml, mzmlb
+import pyopenms
+import pymzml
 import h5py
 import sqlite3
 import duckdb
