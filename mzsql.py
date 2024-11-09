@@ -158,7 +158,7 @@ def turn_mzml_sqlite(file, outfile):
     for spectrum in mzml.MzML(file):
         if spectrum['ms level'] == 1:
             #print(spectrum["index"])
-            idx = "index"
+            idx = int(spectrum['id'].split("scan=")[-1].split()[0])
             mz_vals=spectrum['m/z array']
             int_vals = spectrum['intensity array']
             rt_val = spectrum['scanList']['scan'][0]['scan start time']
