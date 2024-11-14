@@ -25,7 +25,6 @@ jobs:
         run: conda env create -f .github/workflows/environment.yml
 
       - name: Install pyopenms with pip
-        if: runner.os == 'Windows'
         run: pip install pyopenms
 
       - name: Activate Conda and run tests
