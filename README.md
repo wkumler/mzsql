@@ -9,6 +9,12 @@ the quirks and conceits of idiosyncratic file formats. Databases have
 consistent and transferrable syntax for queries, indexing and binary search for rapid data extraction,
 benefit from multi-file aggregations of data, can store processed data alongside, and are established as an industry standard.
 
+Multiple efforts have revealed where SQL is acknowledged as an excellent solution for MS data, including
+
+  1. Metabolomics Workbench
+  2. MassQL development
+  3. Spectra package backends
+
 ### Consistent and transferrable syntax
 
 SQL is widely known and understood. Transforming MS data into a format that can be queried using SQL allows
