@@ -24,11 +24,9 @@ jobs:
       - name: Create Conda env
         run: conda env create -f .github/workflows/environment.yml
 
-      - name: Install pyopenms with pip
-        run: pip install pyopenms
-
       - name: Activate Conda and run tests
         shell: bash -l {0}
         run: |
           conda activate mzsql
+          pip install pyopenms
           pytest tests/
