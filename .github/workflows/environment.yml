@@ -1,0 +1,15 @@
+name: mzsql
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.9
+  - matplotlib
+  - numpy
+  - pandas
+  - pyteomics
+  - pyopenms
+  - pymzml
+  - h5py
+  - sqlite
+  - duckdb
