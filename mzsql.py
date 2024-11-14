@@ -124,9 +124,12 @@ def get_rtrange_mzml_pyopenms_2DPeak(file, rtstart, rtend):
 
 # Indexed mzML things --------------------------------------------------------------------------
 def get_chrom_mzml_idx(idx_file, mz, ppm):
+    raise Exception("Indexed mzML files not currently supported")
     mzmin, mzmax = pmppm(mz, ppm)
     scan_dfs = []
-    for spectrum in mzml.PreIndexedMzML(idx_file):
+    # file_data = file_data=mzml.PreIndexedMzML(idx_file).build_byte_index()
+    # with mzml.read(idx_file, use_index=True) as reader
+    for spectrum in file_data:
         rt_val = spectrum['scanList']['scan'][0]['scan start time']
         mz_vals=spectrum['m/z array']
         int_vals = spectrum['intensity array']
@@ -137,13 +140,17 @@ def get_chrom_mzml_idx(idx_file, mz, ppm):
     return(pd.concat(scan_dfs, ignore_index=True))
 
 def get_spec_mzml_idx(idx_file, scan_num):
-    file_data = mzml.PreIndexedMzML(idx_file)
+    raise Exception("Indexed mzML files not currently supported")
+    # file_data=mzml.PreIndexedMzML(idx_file).build_byte_index()
+    # with mzml.read(idx_file, use_index=True) as reader:
     return(pd.DataFrame({"mz":file_data[scan_num]['m/z array'], "int":file_data[scan_num]['intensity array']}))
 
 
 def get_rtrange_mzml_idx(idx_file, rtstart, rtend):
+    raise Exception("Indexed mzML files not currently supported")
     scan_dfs = []
-    for spectrum in mzml.PreIndexedMzML(idx_file):
+    file_data=mzml.PreIndexedMzML(idx_file).build_byte_index()
+    for spectrum in file_data:
         rt_val = spectrum['scanList']['scan'][0]['scan start time']
         if(rtstart < rt_val < rtend):
             mz_vals=spectrum['m/z array']
