@@ -13,3 +13,5 @@ dependencies:
   - h5py
   - sqlite
   - duckdb
+  - pytest
+

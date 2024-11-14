@@ -27,5 +27,5 @@ jobs:
       - name: Activate Conda and run tests
         shell: bash -l {0}
         run: |
-          source activate mzsql
-          python unit_tests.py
+          conda activate mzsql
+          pytest tests/
