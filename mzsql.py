@@ -253,6 +253,7 @@ def get_rtrange_mz5(file, rtstart, rtend):
 
 
 # MZA things -----------------------------------------------------------------------------------
+# COMPARE TO THE MZAPY PACKAGE FUNCTIONS
 def get_chrom_mza(file, mz, ppm):
     mza = h5py.File(file, 'r')
     
@@ -275,8 +276,8 @@ def get_chrom_mza(file, mz, ppm):
     
 def get_spectrum_mza(file, spectrum_idx):
     mza = h5py.File(mzafile, 'r')
-    intensities = mza["Arrays_intensity/1001"][:]
-    mz = mza["Arrays_mz/1001"][:]
+    intensities = mza["Arrays_intensity/"+scan_num][:]
+    mz = mza["Arrays_mz/"+scan_num][:]
 
     mza.close()
     spec_df = pd.DataFrame({"mz":mz, "int":intensities})
