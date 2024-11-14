@@ -2,7 +2,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pyteomics
+import pyteomics.mzml
+import pyteomics.mzmlb
 import pyopenms
 import pymzml
 import h5py
@@ -35,11 +36,14 @@ def get_chrom_mzml_pyopenms(file, mz, ppm):
     for spectrum in exp:
         rt_val = spectrum.getRT()
         mz_vals, int_vals = spectrum.get_peaks()
-        bet_idxs = mzmin < mz_vals < mzmax
+        bet_idxs = (mzmin < mz_vals) & (mz_vals < mzmax)
         if(sum(bet_idxs)>0):
             df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
             scan_dfs.append(df_scan)    
     return(pd.concat(scan_dfs, ignore_index=True))
+
+# Example available at https://github.com/pymzml/pymzML/blob/dev/example_scripts/extract_ion_chromatogram.py
+# but does not show how to add a ppm tolerance
 def get_chrom_mzml_pymzml(file, mz, ppm):
     run = pymzml.run.Reader(file)
     mzmin, mzmax = pmppm(mz, ppm)
@@ -48,11 +52,11 @@ def get_chrom_mzml_pymzml(file, mz, ppm):
         rt_val = spectrum.scan_time_in_minutes()
         mz_vals = spectrum.mz
         int_vals = spectrum.i
-        bet_idxs = mzmin < mz_vals < mzmax
+        bet_idxs = (mzmin < mz_vals) & (mz_vals < mzmax)
     
         if(sum(bet_idxs)>0):
             df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
-            scan_dfs.append(df_scan)    
+            scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
 def get_chrom_mzml_pyopenms_2DPeak(file, mz, ppm):
     exp = pyopenms.MSExperiment()
@@ -73,6 +77,14 @@ def get_spec_mzml_pyopenms(file, scan_num):
     spec1_data = exp[scan_num].get_peaks()
     return(pd.DataFrame({"mz":spec1_data[0], "int":spec1_data[1]}))
 def get_spec_mzml_pymzml(file, scan_num):
+    # fails for the first scan when given a non-indexed mzML even if build_index is True
+    # run = pymzml.run.Reader("demo_data/180205_Poo_TruePoo_Full1.mzML")
+    # run = pymzml.run.Reader("demo_data/180205_Poo_TruePoo_Full1.mzML", build_index_from_scratch=True)
+    # run = pymzml.run.Reader("demo_data/180205_Poo_TruePoo_Full1_idx.mzML")
+    # pymzml seems to reference their spectra by scan number
+    # spec1_data = run[1].peaks("raw")
+    # print(spec1_data)
+    # plt.stem(spec1_data[:,0], spec1_data[:,1])
     run = pymzml.run.Reader(file)
     spec1_data = run[scan_num].peaks("raw")
     return(pd.DataFrame({"mz":spec1_data[:,0], "int":spec1_data[:,1]}))
