@@ -20,7 +20,7 @@ def get_chrom_mzml_pyteomics(file, mz, ppm):
             scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
 def test_gcm_pyteomics():
-    chrom_data = get_chrom_mzml_pyteomics("../demo_data/180205_Poo_TruePoo_Full1.mzML", 118.0865, 10)
+    chrom_data = get_chrom_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 118.0865, 10)
     assert chrom_data.shape == (1359, 3)
     assert min(chrom_data["mz"]) >= pmppm(118.0865, 10)[0]
     assert max(chrom_data["mz"]) <= pmppm(118.0865, 10)[1]
