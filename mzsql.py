@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pyteomics import mzml, mzmlb
+import pyteomics
 import pyopenms
 import pymzml
 import h5py
@@ -18,7 +18,7 @@ def pmppm(mass, ppm=4):
 def get_chrom_mzml_pyteomics(file, mz, ppm):
     mzmin, mzmax = pmppm(mz, ppm)
     scan_dfs = []
-    for spectrum in mzml.MzML(file):
+    for spectrum in pyteomics.mzml.MzML(file):
         rt_val = spectrum['scanList']['scan'][0]['scan start time']
         mz_vals=spectrum['m/z array']
         int_vals = spectrum['intensity array']
@@ -65,7 +65,7 @@ def get_chrom_mzml_pyopenms_2DPeak(file, mz, ppm):
 
 
 def get_spec_mzml_pyteomics(file, scan_num):
-    file_data = mzml.MzML(file)
+    file_data = pyteomics.mzml.MzML(file)
     return(pd.DataFrame({"mz":file_data[scan_num]['m/z array'], "int":file_data[scan_num]['intensity array']}))
 def get_spec_mzml_pyopenms(file, scan_num):
     exp = pyopenms.MSExperiment()
@@ -82,7 +82,7 @@ def get_spec_mzml_pymzml(file, scan_num):
 
 def get_rtrange_mzml_pyteomics(file, rtstart, rtend):
     scan_dfs = []
-    for spectrum in mzml.MzML(file):
+    for spectrum in pyteomics.mzml.MzML(file):
         rt_val = spectrum['scanList']['scan'][0]['scan start time']
         if(rtstart < rt_val < rtend):
             mz_vals=spectrum['m/z array']
@@ -127,8 +127,8 @@ def get_chrom_mzml_idx(idx_file, mz, ppm):
     raise Exception("Indexed mzML files not currently supported")
     mzmin, mzmax = pmppm(mz, ppm)
     scan_dfs = []
-    # file_data = file_data=mzml.PreIndexedMzML(idx_file).build_byte_index()
-    # with mzml.read(idx_file, use_index=True) as reader
+    # file_data = file_data=pyteomics.mzml.PreIndexedMzML(idx_file).build_byte_index()
+    # with pyteomics.mzml.read(idx_file, use_index=True) as reader
     for spectrum in file_data:
         rt_val = spectrum['scanList']['scan'][0]['scan start time']
         mz_vals=spectrum['m/z array']
@@ -141,15 +141,15 @@ def get_chrom_mzml_idx(idx_file, mz, ppm):
 
 def get_spec_mzml_idx(idx_file, scan_num):
     raise Exception("Indexed mzML files not currently supported")
-    # file_data=mzml.PreIndexedMzML(idx_file).build_byte_index()
-    # with mzml.read(idx_file, use_index=True) as reader:
+    # file_data=pyteomics.mzml.PreIndexedMzML(idx_file).build_byte_index()
+    # with pyteomics.mzml.read(idx_file, use_index=True) as reader:
     return(pd.DataFrame({"mz":file_data[scan_num]['m/z array'], "int":file_data[scan_num]['intensity array']}))
 
 
 def get_rtrange_mzml_idx(idx_file, rtstart, rtend):
     raise Exception("Indexed mzML files not currently supported")
     scan_dfs = []
-    file_data=mzml.PreIndexedMzML(idx_file).build_byte_index()
+    file_data=pyteomics.mzml.PreIndexedMzML(idx_file).build_byte_index()
     for spectrum in file_data:
         rt_val = spectrum['scanList']['scan'][0]['scan start time']
         if(rtstart < rt_val < rtend):
@@ -164,7 +164,7 @@ def get_rtrange_mzml_idx(idx_file, rtstart, rtend):
 # mzMLb things ---------------------------------------------------------------------------------
 def get_chrom_mzmlb(file, mz, ppm):
     scan_dfs = []
-    for spectrum in mzmlb.MzMLb(file):
+    for spectrum in pyteomics.mzmlb.MzMLb(file):
         if spectrum['ms level'] == 1:
             rt_val = spectrum['scanList']['scan'][0]['scan start time']
             mz_vals=spectrum['m/z array']
@@ -178,13 +178,13 @@ def get_chrom_mzmlb(file, mz, ppm):
     return(pd.concat(scan_dfs, ignore_index=True))
 
 def get_spec_mzmlb(file, scan_num):
-    file_data = mzmlb.MzMLb(file)
+    file_data = pyteomics.mzmlb.MzMLb(file)
     return(pd.DataFrame({"mz":file_data[scan_num]['m/z array'], "int":file_data[scan_num]['intensity array']}))
 
 
 def get_rtrange_mzmlb(file, rtstart, rtend):
     scan_dfs = []
-    for spectrum in mzmlb.MzMLb(file):
+    for spectrum in pyteomics.mzmlb.MzMLb(file):
         rt_val = spectrum['scanList']['scan'][0]['scan start time']
         if(rtstart < rt_val < rtend):
             mz_vals=spectrum['m/z array']
@@ -293,7 +293,7 @@ def get_rtrange_mza(file, rtstart, rtend):
 def turn_mzml_sqlite(file, outfile):
     #converts mzml file to sqlite database. Here for reference, and to show change for row id
     conn = sqlite3.connect(outfile)
-    for spectrum in mzml.MzML(file):
+    for spectrum in pyteomics.mzml.MzML(file):
         if spectrum['ms level'] == 1:
             #print(spectrum["index"])
             idx = int(spectrum['id'].split("scan=")[-1].split()[0])
