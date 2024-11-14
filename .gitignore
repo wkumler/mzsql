@@ -4,6 +4,7 @@
 *.mzMLb
 *.sqlite
 *.sql
+Untitled*.ipynb
 
 .ipynb_checkpoints
 __*
