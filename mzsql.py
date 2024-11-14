@@ -45,7 +45,7 @@ def get_chrom_mzml_pyopenms(file, mz, ppm):
 # Example available at https://github.com/pymzml/pymzML/blob/dev/example_scripts/extract_ion_chromatogram.py
 # but does not show how to add a ppm tolerance
 def get_chrom_mzml_pymzml(file, mz, ppm):
-    run = pymzml.run.Reader(file)
+    run = pymzml.run.Reader(file, build_index_from_scratch=True)
     mzmin, mzmax = pmppm(mz, ppm)
     scan_dfs = []
     for spectrum in run:
@@ -85,7 +85,7 @@ def get_spec_mzml_pymzml(file, scan_num):
     # spec1_data = run[1].peaks("raw")
     # print(spec1_data)
     # plt.stem(spec1_data[:,0], spec1_data[:,1])
-    run = pymzml.run.Reader(file)
+    run = pymzml.run.Reader(file, build_index_from_scratch=True)
     spec1_data = run[scan_num].peaks("raw")
     return(pd.DataFrame({"mz":spec1_data[:,0], "int":spec1_data[:,1]}))
 
@@ -115,7 +115,7 @@ def get_rtrange_mzml_pyopenms(file, rtstart, rtend):
             scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
 def get_rtrange_mzml_pymzml(file, rtstart, rtend):
-    run = pymzml.run.Reader(file)  
+    run = pymzml.run.Reader(file, build_index_from_scratch=True)  
     scan_dfs = []
     for spectrum in run:
         rt_val = spectrum.scan_time_in_minutes()
