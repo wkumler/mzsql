@@ -1,0 +1,16 @@
+on:
+  push
+
+jobs:
+  build:
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+        fail-fast: false
+        matrix:
+          config:
+            - {os: windows-latest, r: 'release'}
+            - {os: macOS-latest, r: 'release'}
+            - {os: ubuntu-latest, r: 'release'}
+    steps:
+      - uses: actions/checkout@v2
+
