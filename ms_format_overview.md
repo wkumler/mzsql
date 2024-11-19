@@ -38,6 +38,8 @@ No idea where to get started with this one because the README is just documentat
 In the sole Github issue that exists for this, the developer says "MZTree is not a format like, say, mzML or .raw. It is a storage and retrieval system." Frankly, I don't understand what this means - the data's gotta be stored somewhere and the article certainly makes it sound like it's a method for storing the data for rapid access.
 Pythonic access to this will likely be via local server requests but it at least looks like that should be doable.
 
+After following the instructions on the Github, I'm able to access msViz and convert mzMLs to mzTree files (and the mzTree-points extra) but can't figure out how to query the server. Running `ifconfig` in WSL (where I installed msViz) gave me the IP address to use (172.27.178.175) which, combined with the port number specified in the application let me open a client with Chrome. I then tried to guess at the parameters but got a 500 internal server error with `http://172.27.178.175:4567/api/v2/getpoints?mzmin=118.08&mzmax=118.10&rtmin=0&rtmax=100`.
+
 8 commits in the repo, last one 7 years ago.
 
 ### mz5
