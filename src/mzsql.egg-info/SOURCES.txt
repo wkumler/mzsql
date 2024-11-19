@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+src/mzsql/__init__.py
+src/mzsql/duckdb_functions.py
+src/mzsql/helpers.py
+src/mzsql/mz5_functions.py
+src/mzsql/mza_functions.py
+src/mzsql/mzml_functions.py
+src/mzsql/mzml_idx_functions.py
+src/mzsql/mzmlb_functions.py
+src/mzsql/sqlite_functions.py
+src/mzsql.egg-info/PKG-INFO
+src/mzsql.egg-info/SOURCES.txt
+src/mzsql.egg-info/dependency_links.txt
+src/mzsql.egg-info/requires.txt
+src/mzsql.egg-info/top_level.txt
+tests/test_mzML_funs.py
