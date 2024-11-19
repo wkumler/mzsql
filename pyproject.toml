@@ -1,0 +1,24 @@
+
+[project]
+name = "mzsql"
+version = "0.1.0"
+description = "Code for comparing SQL databases to existing MS formats"
+authors = [{name = "William Kumler", email = "wkumler@uw.edu"},
+           {name = "Sam LaRue", email = "samlarue@uw.edu"}]
+license = { text = "MIT" }
+readme = "README.md"
+dependencies = [
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "pyteomics",
+    "pyopenms",
+    "pymzml",
+    "h5py",
+    "duckdb",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
