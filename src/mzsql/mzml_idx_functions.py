@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import pyteomics.mzml
+from .helpers import pmppm
 
 
 def get_chrom_mzml_idx(idx_file, mz, ppm):

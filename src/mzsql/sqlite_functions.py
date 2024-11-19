@@ -1,11 +1,14 @@
 
 import numpy as np
 import pandas as pd
-import sqlite
+import sqlite3
+import pyteomics.mzml
+from .helpers import pmppm
 
 def turn_mzml_sqlite(file, outfile):
     #converts mzml file to sqlite database. Here for reference, and to show change for row id
     conn = sqlite3.connect(outfile)
+    conn.execute("DROP TABLE IF EXISTS MS1")
     for spectrum in pyteomics.mzml.MzML(file):
         if spectrum['ms level'] == 1:
             #print(spectrum["index"])
@@ -31,7 +34,7 @@ def get_chrom_sqlite(file, mz, ppm):
     conn.close()
     return query_data
 
-def get_spectrum_sqlite(file, spectrum_idx):
+def get_spec_sqlite(file, spectrum_idx):
     #return a single spectrum according to ID
     conn = sqlite3.connect(file)
 

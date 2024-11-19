@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import h5py
 import mzapy
+from .helpers import pmppm
 
 def get_chrom_mza(file, mz, ppm):
     mza = h5py.File(file, 'r')
