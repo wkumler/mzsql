@@ -20,10 +20,9 @@ from .helpers import pmppm
 #     conn.close()
 #     return(outfile)
 
-def turn_mzml_duckdb(file, outfile):
+def turn_mzml_duckdb(file, outfile, ordered=False):
     conn = duckdb.connect(outfile)
     conn.execute("DROP TABLE IF EXISTS MS1")
-    # Impossibly slow to append within the loop so we're doing it outside
     scan_dfs = []
     for spectrum in pyteomics.mzml.MzML(file):
         if spectrum['ms level'] == 1:
@@ -34,7 +33,10 @@ def turn_mzml_duckdb(file, outfile):
             df_scan = pd.DataFrame({'id':idx,'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
             scan_dfs.append(df_scan)
     all_pds = pd.concat(scan_dfs, ignore_index=True)
-    all_pds.to_sql("MS1", conn, if_exists="append", index=False)
+    if(ordered):
+        all_pds.sort_values(by="mz").to_sql("MS1", conn, if_exists="append", index=False)
+    else:
+        all_pds.to_sql("MS1", conn, if_exists="append", index=False)
     conn.close()
     return(outfile)
 
