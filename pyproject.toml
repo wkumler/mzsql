@@ -8,14 +8,13 @@ authors = [{name = "William Kumler", email = "wkumler@uw.edu"},
 license = { text = "MIT" }
 readme = "README.md"
 dependencies = [
-    "matplotlib",
     "numpy",
     "pandas",
     "pyteomics",
     "pyopenms",
     "pymzml",
     "h5py",
-    "duckdb",
+    "duckdb"
 ]
 
 [build-system]
