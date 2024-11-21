@@ -229,7 +229,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn
 
-timing_data = pd.read_csv("demo_notebooks/compiled_timings.csv")
+timing_data = pd.read_csv("demo_notebooks/compiled_timings.csv", header=None)
+timing_data.columns = ["method", "time", "metric", "timestamp"]
+timing_data.tail()
 
 timings_plot = seaborn.catplot(
     data=timing_data, 
@@ -240,6 +242,7 @@ timings_plot = seaborn.catplot(
     height=2,
     aspect=4
 )
+plt.yscale('log')
 timings_plot.savefig("demo_notebooks/README_files/timings_fig.png")
 plt.close()
 ```
@@ -259,7 +262,7 @@ filesize_df = pd.DataFrame(list(file_sizes.items()), columns=['File', 'Size (MB)
 filesize_df["Size (MB)"] = filesize_df["Size (MB)"]/1e6
 
 # Plot barplot
-sns.barplot(x='File', y='Size (MB)', data=filesize_df)
+seaborn.barplot(x='File', y='Size (MB)', data=filesize_df)
 plt.xticks(rotation=90)
 plt.savefig("demo_notebooks/README_files/filesize_fig.png")
 plt.close()
