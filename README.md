@@ -25,7 +25,8 @@ file type. SQL also often results in queries much closer to natural language - c
 
 to
 
-```import matplotlib.pyplot as plt
+```python
+import matplotlib.pyplot as plt
 from pyteomics import mzml
 import numpy as np
 
@@ -99,3 +100,123 @@ of experts rather than individual developers who may leave the project and resul
 
 Not mentioned above: mzData, mzXML, Shaduf, imzML, others?
 
+<details>
+
+<summary>mzML</summary>
+
+Lots of different ways to get data out of mzMLs, including 3 dedicated Python libraries I've discovered:
+
+  - pyteomics
+  - pymzml
+  - pyopenms: Wrapper around a bunch of C code to do things
+      - Has multiple methods of accessing mz/rt chunks
+
+I can't seem to get the indexed version working, at least in such a way that speeds up spectrum access. It feels like something along the lines of the below code should work (for pyteomics), but returns strange errors. 
+
+```python
+file_data=mzml.PreIndexedMzML("demo_data/180205_Poo_TruePoo_Full1_idx.mzML")
+file_data=file_data.build_byte_index()
+```
+
+I also can't tell if something similar is implemented in the other libraries. Also, it may be that the other libraries just handle indexing automagically.
+
+</details>
+
+<details>
+
+<summary>mzMLb</summary>
+
+
+Seems to only be implemented in pyteomics? Double check this later.
+
+</details>
+
+<details>
+
+<summary>mzDB</summary>
+
+
+Creation is pretty straightforward via the raw2mzDB.exe tool but we can't really figure out how to access the data. Package code exists (the original developers have a Python (and R) port of some Rust code but have responded saying that the [rt/mz range extraction isn't yet supported](https://github.com/mzdb/mzdb-rs/issues/3) and hasn't been [since Johannes asked about it in 2018?](https://github.com/mzdb/rmzdb/issues/3). Developer seems responsive but just overwhelmed. R-specific rmzdb package (not to be confused with the rmzdb port of the Rust code) hasn't been touched in 5 years, the Rust/Python/R hasn't been updated in one and a half.
+
+Someone else [wrote a Python package for mzDB access](https://github.com/jerkos/pymzdb) (annoyingly, named the same as the dev Rust port) which has all the associated functions but it's 9 years old and I haven't gotten the chance to give it a try yet and the README is sparse.
+
+Dev version of pymzdb: 8 commits total, 2 years ago
+
+Other version of pymzdb: 10 commits total, 9 years ago
+
+</details>
+
+<details>
+
+<summary>MzTree</summary>
+
+In the sole Github issue that exists for this, the developer says "MZTree is not a format like, say, mzML or .raw. It is a storage and retrieval system." Frankly, I don't understand what this means - the data's gotta be stored somewhere and the article certainly makes it sound like it's a method for storing the data for rapid access. After following the instructions on the Github for installation and compilation with Apache Maven, I'm able to access msViz (`java -jar MZTree/msDataServer/msDataServer-1.0.jar`) and convert mzMLs to mzTree files (and the mzTree-points extra) but can't figure out how to query the server. Running `ifconfig` in WSL (where I installed msViz) gave me the IP address to use (172.27.178.175) which, combined with the port number specified in the application let me open a client with Chrome. I then tried to guess at the parameters but got a 500 internal server error with `http://172.27.178.175:4567/api/v2/getpoints?mzmin=118.08&mzmax=118.10&rtmin=0&rtmax=100`. Instead, I needed to specify numpoints as well so `http://172.27.178.175:4567/api/v2/getpoints?mzmin=118.08&mzmax=118.10&rtmin=0&rtmax=10&numpoints=0` returns the expected data.
+
+8 commits in the repo, last one 7 years ago.
+
+</details>
+
+<details>
+
+<summary>mzMD</summary>
+
+Basically a port of MzTree with some upgrades to the visualization system, so results should be comparable. Their Github is just a pared-down version of MzTree's, no install or startup instructions but seems to behave exactly like MzTree. The MzViz API is exactly the same except the final parameter (number of points) has been changed to `n` and `m` parameters: `http://172.27.178.175:4567/api/v2/getpoints?mzmin=118.08&mzmax=118.10&rtmin=6.5&rtmax=8&n=0&m=0`.
+
+3 commits in the repo (basically just "add files via upload"), last one 4 years ago.
+
+</details>
+
+<details>
+
+<summary>mz5</summary>
+
+Successfully created mz5 file via msconvert and wrote Python code for accessing mz5 files but it's pretty basic. Could maybe be sped up/accelerated with the [pymz5](https://github.com/jmchilton/pymz5/tree/master) library but that library is pretty old now and didn't seem to take off at all (zero issues, very few interactions). Doesn't provide any info about how to use the library either beyond install even though it seems like a ton of work was put into it (782 commits).
+I still need to try this library and see whether it's functional but I'm skeptical - 11 years ago was still Python 2, right?
+
+782 commits in the repo, last one 11 years ago
+
+</details>
+
+<details>
+
+<summary>MZA</summary>
+
+Files were created successfully via the command-line tool (although the README was only recently updated to tell the user how to download it from the releases). Installing `mzapy` from the `no_full_mz_array` branch worked after some back and forth with the responsive dev. Also wrote my own Python access code treating it as an HDF5 which surprisingly made RT range queries much faster, though the chromatogram extraction is faster with `mzapy`.
+
+20 commits in the MZA repo, last one 2 days ago (after I opened an issue for it, prior to which it had been 2 years)
+
+80 commits in the `mzapy` repo with more on various branches, last one a few days ago (after I opened an issue for it)
+
+</details>
+
+<details>
+
+<summary>Aird</summary>
+
+Haven't started yet. Lots of development, lots of support and interest. Seems to have built-in Python support, last updated 2 years ago. Unclear whether it's faster or just more compressed - they don't really show a speed vs format graph AFAIK. For whatever reason, Python isn't recognizing the install but I think that's on me. Conversion was successful and I've uploaded the .aird and .json files to demo_data.
+
+466 commits in the repo, last one 7 months ago (2 years for the python-specific stuff)
+
+</details>
+
+<details>
+
+<summary>Incomparables</summary>
+
+### YAFMS
+
+Seems fully deprecated - the link in the original manuscript now just redirects to PNNL's general software page and I can't find any residuals of the code via quick Googling.
+
+### mzRTree
+
+Haven't started yet. Seems like an older file type and only really compares to GUI formats. No idea how to convert the data into this format or access it - there's no Github I've been able to find and the only code associated I have found [is in Matlab](https://viewer.mathworks.com/?viewer=plain_code&url=https%3A%2F%2Fwww.mathworks.com%2Fmatlabcentral%2Fmlc-downloads%2Fdownloads%2Fe5af2033-4a80-11e4-9553-005056977bd0%2F65b8e141-bbf2-ecf1-80a0-1929890c734e%2Ffiles%2F3DSpectra%2FmzRTreeCreation.m&embed=web). mzDB somehow made it work (and found an example file?) but I have no idea how they did this.
+
+### Toffee
+
+Only works with TOF data, as far as I can tell. That disqualifies it from comparison in my opinion.
+
+### UIMF
+
+UIMF is used by PNNL for their large-scale MS data and uses SQLite as the backend but all the access code is written in C#/C++ and doesn't have a shallow enough learning curve for me to pick it up.
+
+</details>
