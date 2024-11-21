@@ -221,4 +221,70 @@ UIMF is used by PNNL for their large-scale MS data and uses SQLite as the backen
 
 </details>
 
+## Results
+
+
+```python
+import pandas as pd
+import seaborn
+
+timing_data = pd.read_csv("demo_notebooks/compiled_timings.csv")
+
+seaborn.catplot(
+    data=timing_data, 
+    x="method", 
+    y="time", 
+    row="metric", 
+    kind="box", 
+    height=2,
+    aspect=4
+)
+```
+
+          method      time metric                    datetime
+    0  pyteomics  0.061288   spec  2024-11-21 10:30:09.568607
+    1  pyteomics  0.039154   spec  2024-11-21 10:30:09.568607
+    2  pyteomics  0.040040   spec  2024-11-21 10:30:09.568607
+    3  pyteomics  0.040864   spec  2024-11-21 10:30:09.568607
+    4  pyteomics  0.038373   spec  2024-11-21 10:30:09.568607
+
+
+
+
+
+    <seaborn.axisgrid.FacetGrid at 0x7fa5aaa195e0>
+
+
+
+
+    
+![png](README_files/README_2_2.png)
+    
+
+
+
+```python
+import os
+import matplotlib.pyplot as plt
+
+file_sizes = {os.path.splitext(file)[1]: os.path.getsize(os.path.join('demo_data', file)) 
+              for file in os.listdir('demo_data') 
+              if os.path.isfile(os.path.join('demo_data', file))}
+
+# Create DataFrame
+filesize_df = pd.DataFrame(list(file_sizes.items()), columns=['File', 'Size (MB)'])
+filesize_df["Size (MB)"] = filesize_df["Size (MB)"]/1e6
+
+# Plot barplot
+sns.barplot(x='File', y='Size (MB)', data=filesize_df)
+plt.xticks(rotation=90)  # Rotate file names if they are long
+plt.show()
+```
+
+
+    
+![png](README_files/README_3_0.png)
+    
+
+
 README.md compiled from README.ipynb. Use `jupyter nbconvert --to markdown README.ipynb` to recompile.
