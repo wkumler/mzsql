@@ -220,3 +220,5 @@ Only works with TOF data, as far as I can tell. That disqualifies it from compar
 UIMF is used by PNNL for their large-scale MS data and uses SQLite as the backend but all the access code is written in C#/C++ and doesn't have a shallow enough learning curve for me to pick it up.
 
 </details>
+
+README.md compiled from README.ipynb. Use `jupyter nbconvert --to markdown README.ipynb` to recompile.
