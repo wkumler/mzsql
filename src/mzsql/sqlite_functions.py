@@ -5,7 +5,7 @@ import sqlite3
 import pyteomics.mzml
 from .helpers import pmppm
 
-def turn_mzml_sqlite(file, outfile):
+def turn_mzml_sqlite(file, outfile, ordered = False ):
     #converts mzml file to sqlite database. Here for reference, and to show change for row id
     conn = sqlite3.connect(outfile)
     conn.execute("DROP TABLE IF EXISTS MS1")
@@ -18,8 +18,14 @@ def turn_mzml_sqlite(file, outfile):
             rt_val = spectrum['scanList']['scan'][0]['scan start time']
             df_scan = pd.DataFrame({'id':idx,'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
             df_scan.to_sql("MS1", conn, if_exists="append", index=False)
+    if ordered:
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_mz ON MS1 (mz)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_int ON MS1 (int)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_rt ON MS1 (rt)")
     conn.close()
     return(outfile)
+
+
 
 def get_chrom_sqlite(file, mz, ppm):
     #returns the chromatogram from the given file. 
