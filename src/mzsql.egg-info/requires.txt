@@ -1,8 +1,0 @@
-matplotlib
-numpy
-pandas
-pyteomics
-pyopenms
-pymzml
-h5py
-duckdb
