@@ -2,7 +2,6 @@
 import numpy as np
 import pandas as pd
 import duckdb
-import sqlalchemy
 import pyteomics.mzml
 from .helpers import pmppm
 
