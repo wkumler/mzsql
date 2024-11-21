@@ -14,7 +14,8 @@ dependencies = [
     "pyopenms",
     "pymzml",
     "h5py",
-    "duckdb"
+    "duckdb",
+    "mzapy"
 ]
 
 [build-system]
