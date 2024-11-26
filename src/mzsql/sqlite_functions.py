@@ -67,7 +67,7 @@ def turn_mzml_sqlite(file, outfile, ordered=None):
     return outfile
 
 def get_chrom_sqlite(file, mz, ppm):
-"""
+    """
     Extracts a chromatogram from an SQLite database based on an m/z value and tolerance.
 
     Parameters:
@@ -91,7 +91,7 @@ def get_chrom_sqlite(file, mz, ppm):
     return query_data
 
 def get_spec_sqlite(file, spectrum_idx):
-"""
+    """
     Retrieves a single spectrum from an SQLite database by spectrum ID.
 
     This function queries an SQLite database to extract all data from the `MS1` table
@@ -117,7 +117,7 @@ def get_spec_sqlite(file, spectrum_idx):
     return spectrum_data
 
 def get_rtrange_sqlite(file, rtstart, rtend):
-"""
+    """
     Retrieves data from an SQLite database for a specific retention time (RT) range.
 
     This function queries an SQLite database to extract all rows from the `MS1` table
