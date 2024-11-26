@@ -5,25 +5,53 @@ import sqlite3
 import pyteomics.mzml
 from .helpers import pmppm
 
-def turn_mzml_sqlite(file, outfile, ordered = False ):
-    #converts mzml file to sqlite database. Here for reference, and to show change for row id
+# def turn_mzml_sqlite(file, outfile, ordered = False ):
+#     #converts mzml file to sqlite database.
+#     conn = sqlite3.connect(outfile)
+#     conn.execute("DROP TABLE IF EXISTS MS1")
+#     for spectrum in pyteomics.mzml.MzML(file):
+#         if spectrum['ms level'] == 1:
+#             #print(spectrum["index"])
+#             idx = int(spectrum['id'].split("scan=")[-1].split()[0])
+#             mz_vals=spectrum['m/z array']
+#             int_vals = spectrum['intensity array']
+#             rt_val = spectrum['scanList']['scan'][0]['scan start time']
+#             df_scan = pd.DataFrame({'id':idx,'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
+#             df_scan.to_sql("MS1", conn, if_exists="append", index=False)
+#     if ordered:
+#         conn.execute("CREATE INDEX IF NOT EXISTS idx_mz ON MS1 (mz)")
+#         conn.execute("CREATE INDEX IF NOT EXISTS idx_int ON MS1 (int)")
+#         conn.execute("CREATE INDEX IF NOT EXISTS idx_rt ON MS1 (rt)")
+#     conn.close()
+#     return(outfile)
+
+def turn_mzml_sqlite(file, outfile, ordered=None):
+    import sqlite3
+    import pyteomics.mzml
+    import pandas as pd
+
     conn = sqlite3.connect(outfile)
     conn.execute("DROP TABLE IF EXISTS MS1")
+
     for spectrum in pyteomics.mzml.MzML(file):
         if spectrum['ms level'] == 1:
-            #print(spectrum["index"])
             idx = int(spectrum['id'].split("scan=")[-1].split()[0])
-            mz_vals=spectrum['m/z array']
+            mz_vals = spectrum['m/z array']
             int_vals = spectrum['intensity array']
             rt_val = spectrum['scanList']['scan'][0]['scan start time']
-            df_scan = pd.DataFrame({'id':idx,'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
+            df_scan = pd.DataFrame({'id': idx, 'mz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
             df_scan.to_sql("MS1", conn, if_exists="append", index=False)
-    if ordered:
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_mz ON MS1 (mz)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_int ON MS1 (int)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_rt ON MS1 (rt)")
+
+    # Create an index if ordered is specified and valid
+    if ordered in ['mz', 'int', 'rt']:
+        index_name = f"idx_{ordered}"
+        conn.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON MS1 ({ordered})")
+    elif ordered is not None:
+        print(f"Invalid column for indexing: {ordered}. Must be one of 'mz', 'int', or 'rt'.")
+
     conn.close()
-    return(outfile)
+    return outfile
+
 
 
 
