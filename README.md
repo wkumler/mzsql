@@ -231,7 +231,6 @@ import seaborn
 
 timing_data = pd.read_csv("demo_notebooks/compiled_timings.csv", header=None)
 timing_data.columns = ["method", "time", "metric", "timestamp"]
-timing_data.tail()
 
 timings_plot = seaborn.catplot(
     data=timing_data, 
@@ -240,9 +239,12 @@ timings_plot = seaborn.catplot(
     row="metric", 
     kind="box", 
     height=2,
-    aspect=4
+    aspect=4, 
+    sharey=False
 )
-plt.yscale('log')
+for ax in timings_plot.axes.flat:
+    ax.set(yscale="log")
+    ax.tick_params(axis='x', rotation=90)
 timings_plot.savefig("demo_notebooks/README_files/timings_fig.png")
 plt.close()
 ```
@@ -253,17 +255,17 @@ plt.close()
 ```python
 import os
 
-file_sizes = {os.path.splitext(file)[1]: os.path.getsize(os.path.join('demo_data', file)) 
-              for file in os.listdir('demo_data') 
-              if os.path.isfile(os.path.join('demo_data', file))}
+file_names = set(os.listdir('demo_data')).difference(["README.md", ".ipynb_checkpoints"])
+file_sizes = [os.path.getsize('demo_data/'+x)/1e6 for x in file_names]
+file_shortnames = [x.replace("180205_Poo_TruePoo_Full1", "") for x in file_names]
 
-# Create DataFrame
-filesize_df = pd.DataFrame(list(file_sizes.items()), columns=['File', 'Size (MB)'])
-filesize_df["Size (MB)"] = filesize_df["Size (MB)"]/1e6
-
-# Plot barplot
-seaborn.barplot(x='File', y='Size (MB)', data=filesize_df)
+filesize_df = pd.DataFrame({
+    "Filetype": file_shortnames,
+    "Size (MB)": file_sizes
+}).sort_values("Size (MB)")
+seaborn.barplot(x='Filetype', y='Size (MB)', data=filesize_df)
 plt.xticks(rotation=90)
+plt.tight_layout()
 plt.savefig("demo_notebooks/README_files/filesize_fig.png")
 plt.close()
 ```
