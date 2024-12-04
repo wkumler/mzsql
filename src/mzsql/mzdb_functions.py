@@ -56,6 +56,8 @@ def get_chrom_mzdb(file, mz, ppm):
     bb_dataframe = pd.read_sql(bb_query, connection, params=(bb_id_for_chrom,))
     unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
     bb_chrom = pd.concat(unpacked_bb_list).merge(scanid_rt_pd)
+
+    connection.close()
     
     return(bb_chrom[(mzmin < bb_chrom["mz"]) & (bb_chrom["mz"] < mzmax)])
 
@@ -74,6 +76,8 @@ def get_spec_mzdb(file, scan_num):
     bb_dataframe = pd.read_sql(bb_query, connection, params=(bb_id_for_scan,))
     unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
     bb_spec = pd.concat(unpacked_bb_list)
+
+    connection.close()
     return(bb_spec[bb_spec["scan_id"]==scan_num])
 
 def get_rtrange_mzdb(file, rtstart, rtend):
@@ -90,4 +94,6 @@ def get_rtrange_mzdb(file, rtstart, rtend):
     unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
     rtrange_data = pd.concat(unpacked_bb_list).merge(scanid_rt_pd)
     rtrange_data["rt"] /= 60
+
+    connection.close()
     return(rtrange_data)
