@@ -29,4 +29,5 @@ jobs:
         run: |
           conda activate mzsql
           pip install pyopenms
+          pip install .
           pytest tests/

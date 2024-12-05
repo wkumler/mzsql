@@ -56,6 +56,7 @@ def get_chrom_mzdb(file, mz, ppm):
     bb_dataframe = pd.read_sql(bb_query, connection, params=(bb_id_for_chrom,))
     unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
     bb_chrom = pd.concat(unpacked_bb_list).merge(scanid_rt_pd)
+    bb_chrom["rt"] /= 60
 
     connection.close()
     
