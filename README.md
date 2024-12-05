@@ -1,8 +1,6 @@
 ## Data and code demonstrating the efficacy of databases relative to existing mass-spectrometry data formats
 
-This repository pioneers the use of SQL databases for the efficient storage and access of raw
-mass-spectrometry (MS) data. Here, "raw" MS data refers to the data encoded in vendor or .mzML files and contains
-coordinates of retention time, *m/z* ratio, and intensity.
+This repository implements "vanilla" SQL databases for the efficient storage and access of raw mass-spectrometry (MS) data. Here, "raw" MS data refers to the data encoded in vendor or .mzML files and contains coordinates of retention time, *m/z* ratio, and intensity.
 
 Existing data formats fail to provide intuitive, rapid, and programmatic search of raw MS data and require learning
 the quirks and conceits of idiosyncratic file formats. Databases have
@@ -87,8 +85,8 @@ of experts rather than individual developers who may leave the project and resul
 | --- | --- | --- | --- | --- | --- | --- | ---
 | mzML | [Link](https://www.mcponline.org/article/S1535-9476(20)31387-6/fulltext) | 2010 | XML | Yes | No | Many | |
 | mzRTree | [Link](https://dx.doi.org/10.1016/j.jprot.2010.02.006) | 2010 | Tree | No | ? | Java | |
-| YAFMS | [Link](https://dx.doi.org/10.1016/j.jasms.2010.06.014) | 2010 | SQL | No | No | C# | Deprecated? |
-| mz5 | [Link](https://dx.doi.org/10.1074/mcp.O111.011379) | 2012 | HDF5 | Yes | ? | ? | |
+| YAFMS | [Link](https://dx.doi.org/10.1016/j.jasms.2010.06.014) | 2010 | SQL | No | No | C# | [Deprecated?](http://omics.pnl.gov/software/YAFMS) |
+| mz5 | [Link](https://dx.doi.org/10.1074/mcp.O111.011379) | 2012 | HDF5 | Yes | ? | ? | [Deprecated?](https://software.steenlab.org/mz5) |
 | mzDB | [Link](https://dx.doi.org/10.1074/mcp.O114.039115) | 2015 | SQL | No | Yes? | Java, C++ | |
 | Indexed mzML | [Link](https://dx.doi.org/10.1371/journal.pone.0125108) | 2015 | XML | Yes | No | C++, Python | |
 | MzTree | [Link](https://dx.doi.org/10.1371/journal.pone.0188059) | 2017 | SQLite, Tree | No | Yes? | Java | |
@@ -139,6 +137,8 @@ Seems to only be implemented in pyteomics? Double check this later.
 Creation is pretty straightforward via the raw2mzDB.exe tool but we can't really figure out how to access the data. Package code exists (the original developers have a Python (and R) port of some Rust code but have responded saying that the [rt/mz range extraction isn't yet supported](https://github.com/mzdb/mzdb-rs/issues/3) and hasn't been [since Johannes asked about it in 2018?](https://github.com/mzdb/rmzdb/issues/3). Developer seems responsive but just overwhelmed. R-specific rmzdb package (not to be confused with the rmzdb port of the Rust code) hasn't been touched in 5 years, the Rust/Python/R hasn't been updated in one and a half.
 
 Someone else [wrote a Python package for mzDB access](https://github.com/jerkos/pymzdb) (annoyingly, named the same as the dev Rust port) which has all the associated functions but it's 9 years old and I haven't gotten the chance to give it a try yet and the README is sparse.
+
+After some trial and error I've got mzDB working!
 
 Dev version of pymzdb: 8 commits total, 2 years ago
 
@@ -271,5 +271,14 @@ plt.close()
 ```
 
 ![](demo_notebooks/README_files/filesize_fig.png)
+
+### Contributions
+
+Wrote python functions - Sam, Will
+Wrote tests - Sam
+Wrote documentation - Sam
+Set up packaging - Will
+Set up CI - Will
+Code review - Sam, Will
 
 README.md compiled from README.ipynb. Use `jupyter nbconvert --to markdown README.ipynb` to recompile.
