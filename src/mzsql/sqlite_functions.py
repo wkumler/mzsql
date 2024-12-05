@@ -1,27 +1,8 @@
 import sqlite3
 import pandas as pd
 import pyteomics.mzml
+import os
 from .helpers import pmppm
-
-# def turn_mzml_sqlite(file, outfile, ordered = False ):
-#     #converts mzml file to sqlite database.
-#     conn = sqlite3.connect(outfile)
-#     conn.execute("DROP TABLE IF EXISTS MS1")
-#     for spectrum in pyteomics.mzml.MzML(file):
-#         if spectrum['ms level'] == 1:
-#             #print(spectrum["index"])
-#             idx = int(spectrum['id'].split("scan=")[-1].split()[0])
-#             mz_vals=spectrum['m/z array']
-#             int_vals = spectrum['intensity array']
-#             rt_val = spectrum['scanList']['scan'][0]['scan start time']
-#             df_scan = pd.DataFrame({'id':idx,'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
-#             df_scan.to_sql("MS1", conn, if_exists="append", index=False)
-#     if ordered:
-#         conn.execute("CREATE INDEX IF NOT EXISTS idx_mz ON MS1 (mz)")
-#         conn.execute("CREATE INDEX IF NOT EXISTS idx_int ON MS1 (int)")
-#         conn.execute("CREATE INDEX IF NOT EXISTS idx_rt ON MS1 (rt)")
-#     conn.close()
-#     return(outfile)
 
 def turn_mzml_sqlite(file, outfile, ordered=None):
     """
@@ -44,27 +25,38 @@ def turn_mzml_sqlite(file, outfile, ordered=None):
     - KeyError: If the input mzML file does not contain expected fields.
     - ValueError: If the ordered column name is invalid.
     """
+    if not os.path.exists(file):
+        raise FileNotFoundError(f"Input mzML file '{file}' does not exist.")
+
     conn = sqlite3.connect(outfile)
-    conn.execute("DROP TABLE IF EXISTS MS1")
+    try:
+        conn.execute("DROP TABLE IF EXISTS MS1")
 
-    for spectrum in pyteomics.mzml.MzML(file):
-        if spectrum['ms level'] == 1:
-            idx = int(spectrum['id'].split("scan=")[-1].split()[0])
-            mz_vals = spectrum['m/z array']
-            int_vals = spectrum['intensity array']
-            rt_val = spectrum['scanList']['scan'][0]['scan start time']
-            df_scan = pd.DataFrame({'id': idx, 'mz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
-            df_scan.to_sql("MS1", conn, if_exists="append", index=False)
+        for spectrum in pyteomics.mzml.MzML(file):
+            if spectrum['ms level'] == 1:
+                try:
+                    idx = int(spectrum['id'].split("scan=")[-1].split()[0])
+                    mz_vals = spectrum['m/z array']
+                    int_vals = spectrum['intensity array']
+                    rt_val = spectrum['scanList']['scan'][0]['scan start time']
+                except KeyError as e:
+                    raise KeyError(f"Missing expected key in mzML spectrum data: {e}")
 
-    # Create an index if ordered is specified and valid
-    if ordered in ['mz', 'int', 'rt']:
-        index_name = f"idx_{ordered}"
-        conn.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON MS1 ({ordered})")
-    elif ordered is not None:
-        print(f"Invalid column for indexing: {ordered}. Must be one of 'mz', 'int', or 'rt'.")
+                df_scan = pd.DataFrame({'id': idx, 'mz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
+                df_scan.to_sql("MS1", conn, if_exists="append", index=False)
 
-    conn.close()
+        if ordered in ['mz', 'int', 'rt']:
+            index_name = f"idx_{ordered}"
+            conn.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON MS1 ({ordered})")
+        elif ordered is not None:
+            raise ValueError(f"Invalid column for indexing: {ordered}. Must be one of 'mz', 'int', or 'rt'.")
+    except sqlite3.Error as e:
+        raise sqlite3.Error(f"SQLite error occurred: {e}")
+    finally:
+        conn.close()
+
     return outfile
+
 
 def get_chrom_sqlite(file, mz, ppm):
     """
