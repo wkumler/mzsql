@@ -1,8 +1,3 @@
-import numpy as np
-import pandas as pd
-from pyteomics import mzml, mzmlb
-import pyopenms
-import pymzml
 from mzsql import *
 
 def test_gcm_pyteomics():
@@ -24,5 +19,5 @@ def test_get_chrom_mzdb():
 def test_get_spec_mzdb():
     spec_data_mzml = get_spec_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 1)
     spec_data_mzdb = get_spec_mzdb("demo_data/180205_Poo_TruePoo_Full1.raw.mzDB", 1)
-    assert chrom_data_mzml["mz"] == chrom_data_mzdb["mz"]
-    assert chrom_data_mzml["int"] == chrom_data_mzdb["int"]
+    assert spec_data_mzml["mz"] == spec_data_mzdb["mz"]
+    assert spec_data_mzml["int"] == spec_data_mzdb["int"]
