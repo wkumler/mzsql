@@ -6,6 +6,18 @@ import mzapy
 from .helpers import pmppm
 
 def get_chrom_mza(file, mz, ppm):
+    """
+    Retrieves chromatogram data from an MZA file for a specified m/z range.
+
+    Args:
+        file (str): Path to the MZA file to be processed.
+        mz (float): The target m/z value.
+        ppm (float): The allowed mass tolerance in parts per million (ppm).
+
+    Returns:
+        pd.DataFrame: A DataFrame containing m/z, intensity, and retention time data 
+                      for the specified m/z range.
+    """
     mza = h5py.File(file, 'r')
     
     scan_dfs = []
@@ -26,6 +38,16 @@ def get_chrom_mza(file, mz, ppm):
     return(chrom_data)
     
 def get_spec_mza(file, spectrum_idx):
+    """
+    Retrieves spectrum data for a specific scan index from an MZA file.
+
+    Args:
+        file (str): Path to the MZA file.
+        spectrum_idx (int): The scan index of the spectrum to retrieve.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing m/z and intensity values for the specified spectrum.
+    """
     mza = h5py.File(file, 'r')
     intensities = mza["Arrays_intensity/"+str(spectrum_idx)][:]
     mz = mza["Arrays_mz/"+str(spectrum_idx)][:]
@@ -34,6 +56,18 @@ def get_spec_mza(file, spectrum_idx):
     return(spec_df)
 
 def get_rtrange_mza(file, rtstart, rtend):
+    """
+    Retrieves spectrum data within a specified retention time range from an MZA file.
+
+    Args:
+        file (str): Path to the MZA file.
+        rtstart (float): The start retention time value.
+        rtend (float): The end retention time value.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing m/z, intensity, and retention time values for 
+                      spectra within the specified retention time range.
+    """
     mza = h5py.File(file, 'r')
     scan_dfs = []
     file_keys = sorted(mza["Arrays_intensity"].keys(), key=lambda x: int(x))
@@ -53,6 +87,18 @@ def get_rtrange_mza(file, rtstart, rtend):
 
 
 def get_chrom_mzapy(file, mz, ppm):
+    """
+    Retrieves chromatogram data from an mzapy MZA file for a specified m/z range.
+
+    Args:
+        file (str): Path to the mzapy file to be processed.
+        mz (float): The target m/z value.
+        ppm (float): The allowed mass tolerance in parts per million (ppm).
+
+    Returns:
+        pd.DataFrame: A DataFrame containing retention time and intensity data 
+                      for the specified m/z range.
+    """
     mzmin, mzmax = pmppm(mz, ppm)
     mza=mzapy.MZA(file)
     xic_rt, xic_int = mza.collect_xic_arrays_by_mz(mzmin, mzmax)
@@ -61,6 +107,16 @@ def get_chrom_mzapy(file, mz, ppm):
     return(chrom_data)
     
 def get_spec_mzapy(file, spectrum_idx):
+    """
+    Retrieves spectrum data for a specific scan index from an mzapy MZA file.
+
+    Args:
+        file (str): Path to the mzapy file.
+        spectrum_idx (int): The scan index of the spectrum to retrieve.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing m/z and intensity values for the specified spectrum.
+    """
     mza=mzapy.MZA(file)
     mean_rt_diff = np.mean(np.diff(mza.rt))
     rt_min, rt_max = mza.rt[spectrum_idx-1]-mean_rt_diff/100, mza.rt[spectrum_idx-1]+mean_rt_diff/100
@@ -70,6 +126,18 @@ def get_spec_mzapy(file, spectrum_idx):
     return(spec_df)
 
 def get_rtrange_mzapy(file, rtstart, rtend):
+    """
+    Retrieves spectrum data within a specified retention time range from an mzapy MZA file.
+
+    Args:
+        file (str): Path to the mzapy file.
+        rtstart (float): The start retention time value.
+        rtend (float): The end retention time value.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing retention time, m/z, and intensity values for 
+                      spectra within the specified retention time range.
+    """
     mza=mzapy.MZA(file)
     rtrange_data = mza.collect_ms1_df_by_rt(rtstart, rtend)
     rtrange_data = rtrange_data[["rt", "mz", "intensity"]]
