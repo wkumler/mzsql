@@ -4,6 +4,19 @@ import pandas as pd
 from .helpers import pmppm
 
 def get_chrom_mztree(url_port, mz, ppm):
+    """
+    Fetches chromatogram data from a specified server endpoint within a given m/z range 
+    and processes it into a pandas DataFrame.
+
+    Args:
+        url_port (str): The URL and port where the server is running.
+        mz (float): The target m/z value to extract chromatogram data around.
+        ppm (float): The parts per million (ppm) tolerance to define the m/z range.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the chromatogram data with columns 
+                      ["rt", "mz", "intensity"], sorted by retention time (rt).
+    """
     mz_min, mz_max = pmppm(mz, ppm)
     request_string = f"{url_port}/api/v2/getpoints?mzmin={mz_min}&mzmax={mz_max}&rtmin=0&rtmax=1000000&numpoints=0"
     

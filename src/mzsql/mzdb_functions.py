@@ -7,6 +7,16 @@ from .helpers import pmppm
 
 
 def unpack_raw_bb(raw_string):
+    """
+    Unpacks raw bounding box (BB) data from a binary string and converts it into a DataFrame.
+
+    Args:
+        raw_string (bytes): A raw binary string containing peak data for multiple scans.
+
+    Returns:
+        pd.DataFrame: A DataFrame with columns ['mz', 'int', 'scan_id'] representing 
+                      m/z, intensity, and scan ID for each peak.
+    """
     offset = 0
     scanids = []
     offsets = []
@@ -35,6 +45,18 @@ def unpack_raw_bb(raw_string):
 
 
 def get_chrom_mzdb(file, mz, ppm):
+    """
+    Retrieves chromatogram data from an mzDB file for a specified m/z range.
+
+    Args:
+        file (str): Path to the mzDB file.
+        mz (float): The target m/z value.
+        ppm (float): The allowed mass tolerance in parts per million (ppm).
+
+    Returns:
+        pd.DataFrame: A DataFrame containing m/z, intensity, and retention time data 
+                      for the specified m/z range.
+    """
     connection = sqlite3.connect(file)
     cursor = connection.cursor()
 
@@ -63,6 +85,16 @@ def get_chrom_mzdb(file, mz, ppm):
     return(bb_chrom[(mzmin < bb_chrom["mz"]) & (bb_chrom["mz"] < mzmax)])
 
 def get_spec_mzdb(file, scan_num):
+    """
+    Retrieves spectrum data for a specific scan number from an mzDB file.
+
+    Args:
+        file (str): Path to the mzDB file.
+        scan_num (int): The scan number to retrieve the spectrum for.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing m/z and intensity values for the specified scan.
+    """
     connection = sqlite3.connect(file)
     cursor = connection.cursor()
     spec_bb_query = "SELECT bb_first_spectrum_id FROM spectrum WHERE id = ?"
@@ -82,6 +114,18 @@ def get_spec_mzdb(file, scan_num):
     return(bb_spec[bb_spec["scan_id"]==scan_num])
 
 def get_rtrange_mzdb(file, rtstart, rtend):
+    """
+    Retrieves spectrum data within a specified retention time range from an mzDB file.
+
+    Args:
+        file (str): Path to the mzDB file.
+        rtstart (float): The start retention time value in minutes.
+        rtend (float): The end retention time value in minutes.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing m/z, intensity, and retention time values for 
+                      spectra within the specified retention time range.
+    """
     connection = sqlite3.connect(file)
     scanid_rt_pd = pd.read_sql("SELECT id AS scan_id, time AS rt, ms_level FROM spectrum", connection)
 
