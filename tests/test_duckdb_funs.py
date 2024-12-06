@@ -22,17 +22,9 @@ def test_get_spec_duckdb():
     spec_data_mzml = get_spec_mzml_pymzml("../demo_data/180205_Poo_TruePoo_Full1_idx.mzML", 1)
     spec_data_duckdb = get_spec_duckdb("../demo_data/180205_Poo_TruePoo_Full1.duckdb", 1)
     
-    # Print a few rows to inspect the data
-    print("Reference Data (mzML):")
-    print(spec_data_mzml.head())
-    
-    print("Test Data (DuckDB):")
-    print(spec_data_duckdb.head())
-    
     # Align indices before comparison
     spec_data_mzml, spec_data_duckdb = spec_data_mzml.align(spec_data_duckdb, join='inner')
     
-    # Then perform the comparison
     assert (spec_data_mzml["mz"] == spec_data_duckdb["mz"]).all()
     assert (spec_data_mzml["int"] == spec_data_duckdb["int"]).all()
 
