@@ -186,7 +186,7 @@ def get_rtrange_mzml_pyopenms_2DPeak(file, rtstart, rtend):
 # Example available at https://github.com/pymzml/pymzML/blob/dev/example_scripts/extract_ion_chromatogram.py
 # but does not show how to add a ppm tolerance
 def get_chrom_mzml_pymzml(file, mz, ppm):
-     """
+    """
     Retrieves chromatogram data from a mzML file using pymzml for a specific m/z range.
 
     Args:
