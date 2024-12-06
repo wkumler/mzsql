@@ -12,7 +12,7 @@ def test_get_chrom_mza():
     merged_data = pd.merge(ref_data, test_data, on="rt", suffixes=("_ref", "_test"))
 
     assert (merged_data["mz_ref"] == merged_data["mz_test"]).all()
-    assert (merged_data["int_ref"] == merged_data["int_test"]).all(),
+    assert (merged_data["int_ref"] == merged_data["int_test"]).all()
 
 
 def test_get_spec_mza():
