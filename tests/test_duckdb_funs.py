@@ -41,3 +41,5 @@ def test_get_rtrange_duckdb():
     assert (rtrange_data_mzml["rt"] == rtrange_data_duckdb["rt"]).all()
     assert (rtrange_data_mzml["mz"] == rtrange_data_duckdb["mz"]).all()
     assert (rtrange_data_mzml["int"] == rtrange_data_duckdb["int"]).all()
+
+os.remove("../demo_data/180205_Poo_TruePoo_Full1.duckdb")

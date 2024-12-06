@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from mzsql import *
+import os
 
 # Tests for SQLite file type
 def test_turn_mzml_sqlite():
@@ -30,3 +31,5 @@ def test_get_rtrange_sqlite():
     assert (rtrange_data_mzml["rt"] == rtrange_data_sqlite["rt"]).all()
     assert (rtrange_data_mzml["mz"] == rtrange_data_sqlite["mz"]).all()
     assert (rtrange_data_mzml["int"] == rtrange_data_sqlite["int"]).all()
+
+os.remove("../demo_data/180205_Poo_TruePoo_Full1.sqlite")
