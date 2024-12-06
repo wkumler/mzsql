@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
-from pyteomics import mzml, mzmlb
 import pyopenms
-import pymzml
 from mzsql import *
 
 def test_get_chrom_mzdb():
@@ -20,7 +18,7 @@ def test_get_spec_mzdb():
     assert spec_data_mzml["int"] == spec_data_mzdb["int"]
 
 def test_get_rtrange_mzdb():
-    rtrange_data_mzml = get_rtrange_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 1)
-    rtrange_data_mzdb = get_rtrange_mzdb("demo_data/180205_Poo_TruePoo_Full1.raw.mzDB", 1)
+    rtrange_data_mzml = get_rtrange_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 6.5, 8)
+    rtrange_data_mzdb = get_rtrange_mzdb("demo_data/180205_Poo_TruePoo_Full1.raw.mzDB", 6.5, 8)
     assert rtrange_data_mzml["mz"] == rtrange_data_mzdb["mz"]
     assert rtrange_data_mzml["int"] == rtrange_data_mzdb["int"]

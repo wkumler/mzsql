@@ -21,7 +21,7 @@ def test_get_spec_duckdb():
     assert spec_data_mzml["int"] == spec_data_duckdb["int"]
 
 def test_get_rtrange_duckdb():
-    rtrange_data_mzml = get_rtrange_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 1)
-    rtrange_data_duckdb = get_rtrange_duckdb("demo_data/180205_Poo_TruePoo_Full1.duckdb", 1)
+    rtrange_data_mzml = get_rtrange_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 6.5, 8)
+    rtrange_data_duckdb = get_rtrange_duckdb("demo_data/180205_Poo_TruePoo_Full1.duckdb", 6.5, 8)
     assert rtrange_data_mzml["mz"] == rtrange_data_duckdb["mz"]
     assert rtrange_data_mzml["int"] == rtrange_data_duckdb["int"]

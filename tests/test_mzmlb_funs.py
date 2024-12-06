@@ -1,9 +1,6 @@
 import numpy as np
 import pandas as pd
-from pyteomics import mzml, mzmlb
-import pyopenms
 import pytest
-import pymzml
 from mzsql import *
 
 # Tests for mzMLB file type
@@ -21,7 +18,7 @@ def test_get_spec_mzmlb():
     assert spec_data_mzml["int"] == spec_data_mzmlb["int"]
 
 def test_get_rtrange_mzmlb():
-    rtrange_data_mzml = get_rtrange_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 1)
-    rtrange_data_mzmlb = get_rtrange_mzmlb("demo_data/180205_Poo_TruePoo_Full1.mzMLB", 1)
+    rtrange_data_mzml = get_rtrange_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 6.5, 8)
+    rtrange_data_mzmlb = get_rtrange_mzmlb("demo_data/180205_Poo_TruePoo_Full1.mzMLB", 6.5, 8)
     assert rtrange_data_mzml["mz"] == rtrange_data_mzmlb["mz"]
     assert rtrange_data_mzml["int"] == rtrange_data_mzmlb["int"]

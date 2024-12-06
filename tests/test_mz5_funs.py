@@ -20,7 +20,7 @@ def test_get_spec_mz5():
     assert spec_data_mzml["int"] == spec_data_mz5["int"]
 
 def test_get_rtrange_mz5():
-    rtrange_data_mzml = get_rtrange_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 1)
-    rtrange_data_mz5 = get_rtrange_mz5("demo_data/180205_Poo_TruePoo_Full1.mz5", 1)
+    rtrange_data_mzml = get_rtrange_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 6.5, 8)
+    rtrange_data_mz5 = get_rtrange_mz5("demo_data/180205_Poo_TruePoo_Full1.mz5", 6.5, 8)
     assert rtrange_data_mzml["mz"] == rtrange_data_mz5["mz"]
     assert rtrange_data_mzml["int"] == rtrange_data_mz5["int"]
