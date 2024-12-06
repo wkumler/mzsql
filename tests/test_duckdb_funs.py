@@ -4,6 +4,9 @@ import pytest
 from mzsql import *
 
 
+# Smoke test DuckDB creation
+def test_turn_mzml_duckdb():
+    turn_mzml_duckdb("../demo_data/180205_Poo_TruePoo_Full1_idx.mzML", "../demo_data/180205_Poo_TruePoo_Full1.duckdb")
 
 
 # Tests for DuckDB file type
