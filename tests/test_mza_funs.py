@@ -7,18 +7,19 @@ from mzsql import *
 def test_get_chrom_mza():
     ref_data = get_chrom_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 118.0865, 10)
     test_data = get_chrom_mza("demo_data/180205_Poo_TruePoo_Full1.mza", 118.0865, 10)
-    assert ref_data["rt"].equals(test_data["rt"])
-    assert ref_data["mz"].equals(test_data["mz"])
-    assert ref_data["int"].equals(test_data["int"])
+    assert (ref_data["rt"] == test_data["rt"]).all()
+    assert (ref_data["mz"] == test_data["mz"]).all()
+    assert (ref_data["int"] == test_data["int"]).all()
 
 def test_get_spec_mza():
     spec_data_mzml = get_spec_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 1)
     spec_data_mza = get_spec_mza("demo_data/180205_Poo_TruePoo_Full1.mza", 1)
-    assert spec_data_mzml["mz"] == spec_data_mza["mz"]
-    assert spec_data_mzml["int"] == spec_data_mza["int"]
+    assert (spec_data_mzml["mz"] == spec_data_mza["mz"]).all()
+    assert (spec_data_mzml["int"] == spec_data_mza["int"]).all()
 
 def test_get_rtrange_mza():
     rtrange_data_mzml = get_rtrange_mzml_pyteomics("demo_data/180205_Poo_TruePoo_Full1.mzML", 6.5, 8)
     rtrange_data_mza = get_rtrange_mza("demo_data/180205_Poo_TruePoo_Full1.mza", 6.5, 8)
-    assert rtrange_data_mzml["mz"] == rtrange_data_mza["mz"]
-    assert rtrange_data_mzml["int"] == rtrange_data_mza["int"]
+    assert (rtrange_data_mzml["rt"] == rtrange_data_mza["rt"]).all()
+    assert (rtrange_data_mzml["mz"] == rtrange_data_mza["mz"]).all()
+    assert (rtrange_data_mzml["int"] == rtrange_data_mza["int"]).all()
