@@ -8,7 +8,7 @@ from mzsql import *
 
 # Tests for DuckDB file type
 def test_get_chrom_duckdb():
-    ref_data = get_chrom_mzml_pymzml("../demo_data/180205_Poo_TruePoo_Full1.mzML", 118.0865, 10)
+    ref_data = get_chrom_mzml_pymzml("../demo_data/180205_Poo_TruePoo_Full1_idx.mzML", 118.0865, 10)
     test_data = get_chrom_duckdb("../demo_data/180205_Poo_TruePoo_Full1.duckdb", 118.0865, 10)
     
     # Align indices before comparison
@@ -29,7 +29,7 @@ def test_get_spec_duckdb():
     assert (spec_data_mzml["int"] == spec_data_duckdb["int"]).all()
 
 def test_get_rtrange_duckdb():
-    rtrange_data_mzml = get_rtrange_mzml_pymzml("../demo_data/180205_Poo_TruePoo_Full1.mzML", 6.5, 8)
+    rtrange_data_mzml = get_rtrange_mzml_pymzml("../demo_data/180205_Poo_TruePoo_Full1_idx.mzML", 6.5, 8)
     rtrange_data_duckdb = get_rtrange_duckdb("../demo_data/180205_Poo_TruePoo_Full1.duckdb", 6.5, 8)
     
     # Align indices before comparison
