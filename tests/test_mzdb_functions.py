@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import pyopenms
+import pytest
 from mzsql import *
 
 def test_get_chrom_mzdb():
