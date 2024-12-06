@@ -74,6 +74,9 @@ def get_chrom_sqlite(file, mz, ppm):
     - sqlite3.Error: If there is an issue with SQLite operations.
     - ValueError: If `mz` or `ppm` values are invalid.
     """
+    if not os.path.exists(file):
+        raise FileNotFoundError(f"Database '{file}' does not exist.")
+
     mz_min, mz_max = pmppm(mz, ppm)
     conn = sqlite3.connect(file)
     query = f"SELECT * FROM MS1 WHERE mz BETWEEN {mz_min} AND {mz_max}"
@@ -100,6 +103,9 @@ def get_spec_sqlite(file, spectrum_idx):
     - sqlite3.Error: If there is an issue with SQLite operations.
     - ValueError: If `spectrum_idx` is invalid.
     """
+    if not os.path.exists(file):
+        raise FileNotFoundError(f"Database '{file}' does not exist.")
+
     conn = sqlite3.connect(file)
     query = f"SELECT * FROM MS1 WHERE id = {spectrum_idx}"
     spectrum_data = pd.read_sql_query(query, conn)
@@ -128,6 +134,9 @@ def get_rtrange_sqlite(file, rtstart, rtend):
     - sqlite3.Error: If there is an issue with SQLite operations.
     - ValueError: If `rtstart` or `rtend` are invalid.
     """
+    if not os.path.exists(file):
+        raise FileNotFoundError(f"Database '{file}' does not exist.")
+
     conn = sqlite3.connect(file)
     query = f"SELECT * FROM MS1 WHERE rt >= {rtstart} AND rt <= {rtend}"
     rt_range_data = pd.read_sql_query(query, conn)
