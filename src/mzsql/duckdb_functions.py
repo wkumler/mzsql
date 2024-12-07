@@ -5,7 +5,7 @@ import duckdb
 import pyteomics.mzml
 from .helpers import pmppm
 
-def turn_mzml_duckdb(file, outfile, ordered=False):
+def turn_mzml_duckdb(file, outfile, ordered=None):
     """
     Converts an mzML file into a DuckDB database table.
     
@@ -31,8 +31,8 @@ def turn_mzml_duckdb(file, outfile, ordered=False):
             scan_dfs.append(df_scan)
 
     all_pds = pd.concat(scan_dfs, ignore_index=True)
-    if ordered:
-        all_pds.sort_values(by="mz", inplace=True)
+    if ordered is not None:
+        all_pds.sort_values(by=ordered, inplace=True)
 
     conn.execute("CREATE TABLE MS1 AS SELECT * FROM all_pds")
     conn.close()
