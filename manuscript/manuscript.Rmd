@@ -1,0 +1,53 @@
+---
+title: "Databases are an effective and efficient method for storage and access of mass-spectrometry data"
+author:
+  - William Kumler
+  - Anitra E. Ingalls
+output: word_document
+bibliography:
+- Exported Items.bib
+csl: journal-of-proteome-research.csl
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+https://researcher-resources.acs.org/publish/author_guidelines?coden=jprobs
+
+# Abstract
+
+(200 words max)
+
+# Introduction
+
+Mass spectrometry (MS) still lacks a performant data access format. The mzML file type [@Martens2011], a result of over a decade of interlaboratory collaboration and workshopping, struggles to provide rapid computational access to the m/z and intensity tuples. This is the crucial component in nearly all mass spectrometry analysis, but mzML’s text-based XML format requires time-consuming decompression performed one scan at a time. This is largely due to its preservation of the scan as the unit of transaction while the field moves increasingly away from single-scan analysis [@Ting2015].
+
+As a result, alternative file formats are proposed practically every year. These include direct improvements to the mzML format with indexing [@Rost2015] and better internal encoding of the data [@Bhamber2021], HDF5-based alternatives [@Bhamber2021; @Wilhelm2012; @Bilbao2023; @Tully2020; @Askenazi2017], relational databases [@Shah2010; @Bouyssie2015; @Handy2017; @Yang2022; @Beagley2009], or fully custom alternatives [@Rompp2011; @Lu2022]. Fundamentally, these alternatives implement tradeoffs between user sanity in exchange for access speed and/or size on disk with clever compression algorithms and modern data structures that move away from the human-readable format of the mzML. These optimized formats are inherently more difficult to understand and usually lack comprehensive documentation or examples (particularly across programming languages) making it difficult for new users to enjoy their benefits or extend their functionality. This steep learning curve, coupled with a lack of support in conversion tools such as Proteowizard’s msconvert [@Chambers2012], has prevented widespread adoption of these new formats despite their clear computational advantages. Such formats are also fragile in the sense that without community support, their continued development depends entirely on the original developers and easily become deprecated (i.e. YAFMS, Shaduf, mz5). A simple, speedy, and small MS data format remains very much in demand.
+
+Relational databases are not new for MS workflows (see references above) and compete predominantly with HDF5-based methods. Both of these systems are widely used for big data and can be applied to MS data in a plethora of ways, leading to the proliferation of implementations we see today. Both backends provide excellent universality, larger-than-memory support, and rapid access to data, but HDF5-based systems excel at self-description and hierarchical structures [@Askenazi2017] while the relational database model is optimized for multi-table queries using a consistent syntax [@ref original database paper?]. Relational databases are increasingly seen in MS workflows for both raw and processed data, with SQLite backends now supported in the popular peakpicking software xcms [@Smith2006] via the Spectra package [@Rainer2022] (though in-memory and HDF5 options are also supported) and on MetabolomicsWorkbench [@Sud2016] while the development of MassQL [@Jarmusch2022] demonstrates the increasing comfort that MS analysts have with the adoption of SQL.
+
+Relational databases also have several distinct advantages over hierarchical or text-based systems, particularly in performing searches for subsets of data via indices. Importantly, this indexing differs from the byte-offset indexes that already exist in the indexed mzML and HDF5 formats because the search for a particular subset cannot be done efficiently with a byte-offset index when the m/z data is encoded, though access to a particular scan can be incredibly rapid. Additionally, data from multiple samples can be stored together in a single table, differing from formats like mzDB, mzTree, and mzMD and allowing queries of all dataset samples to be performed without looping through each file in turn, thereby avoiding the associated computational overhead and query complexity. 
+
+SQL databases also allow mass spectrometrists to access the continual improvements and long-term stability produced by the industries who specialize in these. While HDF5 is a common scientific data format, databases are constantly under development by industry titans deeply invested in their maintenance and optimization. Online analytical processing (OLAP) methods are particularly well suited for MS data given their optimization for read speed, making modern systems such as DuckDB [@Raasveldt2019] or Apache Arrow’s columnar formats highly appealing while preserving the familiar serverless approach.
+
+Our previous work showed how the ragged arrays of MS data can be converted into a tidy database table [@Kumler2022] and here we logically extend that method into proper database storage and access. Here, we test the hypothesis that a “vanilla” implementation of a relational database which exposes the raw m/z and intensity tuples is an intuitive and performant way of storing MS data for exploratory analysis, visualization, and quality control. We compare the time and space required to extract a representative data subset under three conditions (single scan, ion chromatogram, and all scans within a retention time range) and perform these tests on multiple databases as well as mzML and other MS data formats across multiple MS experiments with varying magnitudes for comparison.
+
+# Experimental section
+
+This “vanilla” database deprioritizes the metadata associated with a given file and focuses on performance and simplicity. Thus, this method does not replace the existing vendor-specific or mzML files but instead constructs a parallel data structure and represents our intuition that metadata is rarely the main target of MS analysis and that labs typically preserve the original files anyway.
+
+# Results
+
+# Discussion
+
+# Conclusion
+
+# Acknowledgements
+
+# Data availability
+
+# References
+
+# Supplement
