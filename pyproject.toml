@@ -15,7 +15,8 @@ dependencies = [
     "pymzml",
     "h5py",
     "duckdb",
-    "mzapy"
+    "mzapy",
+    "lxml"
 ]
 
 [build-system]
