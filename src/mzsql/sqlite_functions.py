@@ -19,41 +19,35 @@ def turn_mzml_sqlite(file, outfile, ordered=None):
 
     Returns:
     - str: The path to the created SQLite database file.
-
-    Raises:
-    - sqlite3.Error: If there is an issue with SQLite operations.
-    - KeyError: If the input mzML file does not contain expected fields.
-    - ValueError: If the ordered column name is invalid.
     """
     if not os.path.exists(file):
         raise FileNotFoundError(f"Input mzML file '{file}' does not exist.")
 
     conn = sqlite3.connect(outfile)
-    try:
-        conn.execute("DROP TABLE IF EXISTS MS1")
+    conn.execute("DROP TABLE IF EXISTS MS1")
+    conn.execute("DROP TABLE IF EXISTS MS2")
 
-        for spectrum in pyteomics.mzml.MzML(file):
-            if spectrum['ms level'] == 1:
-                try:
-                    idx = int(spectrum['id'].split("scan=")[-1].split()[0])
-                    mz_vals = spectrum['m/z array']
-                    int_vals = spectrum['intensity array']
-                    rt_val = spectrum['scanList']['scan'][0]['scan start time']
-                except KeyError as e:
-                    raise KeyError(f"Missing expected key in mzML spectrum data: {e}")
-
-                df_scan = pd.DataFrame({'id': idx, 'mz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
-                df_scan.to_sql("MS1", conn, if_exists="append", index=False)
-
-        if ordered in ['mz', 'int', 'rt']:
-            index_name = f"idx_{ordered}"
-            conn.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON MS1 ({ordered})")
-        elif ordered is not None:
-            raise ValueError(f"Invalid column for indexing: {ordered}. Must be one of 'mz', 'int', or 'rt'.")
-    except sqlite3.Error as e:
-        raise sqlite3.Error(f"SQLite error occurred: {e}")
-    finally:
-        conn.close()
+    for spectrum in pyteomics.mzml.MzML(file):
+        if spectrum['ms level'] == 1:
+            idx = int(spectrum['id'].split("scan=")[-1].split()[0])
+            mz_vals = spectrum['m/z array']
+            int_vals = spectrum['intensity array']
+            rt_val = spectrum['scanList']['scan'][0]['scan start time']
+            df_scan = pd.DataFrame({'id': idx, 'mz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
+            df_scan.to_sql("MS1", conn, if_exists="append", index=False)
+        if spectrum['ms level'] == 2:
+            idx = int(spectrum['id'].split("scan=")[-1].split()[0])
+            mz_vals = spectrum['m/z array']
+            int_vals = spectrum['intensity array']
+            rt_val = spectrum['scanList']['scan'][0]['scan start time']
+            premz_val = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window target m/z']
+            df_scan = pd.DataFrame({'id': idx, 'premz': premz_val, 'fragmz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
+            df_scan.to_sql("MS2", conn, if_exists="append", index=False)
+    
+    if ordered in ['mz', 'rt']:
+        index_name = f"idx_{ordered}"
+        conn.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON MS1 ({ordered})")
+    conn.close()
 
     return outfile
 
@@ -144,3 +138,35 @@ def get_rtrange_sqlite(file, rtstart, rtend):
     conn.close()
     
     return rt_range_data
+
+
+def get_MS2scan_sqlite(file, spectrum_idx):
+    conn = sqlite3.connect(file)
+    query = f"SELECT * FROM MS2 WHERE id ={spectrum_idx}"
+    query_data = pd.read_sql_query(query, conn)
+    conn.close()
+    return(query_data)
+
+def get_MS2fragmz_sqlite(file, fragment_mz, ppm_acc):
+    conn = sqlite3.connect(file)
+    mzmin, mzmax = pmppm(fragment_mz, ppm_acc)
+    query = f"SELECT * FROM MS2 WHERE fragmz BETWEEN {mzmin} AND {mzmax}"
+    query_data = pd.read_sql_query(query, conn)
+    conn.close()
+    return(query_data)
+
+def get_MS2premz_sqlite(file, precursor_mz, ppm_acc):
+    conn = sqlite3.connect(file)
+    mzmin, mzmax = pmppm(precursor_mz, ppm_acc)
+    query = f"SELECT * FROM MS2 WHERE premz BETWEEN {mzmin} AND {mzmax}"
+    query_data = pd.read_sql_query(query, conn)
+    conn.close()
+    return(query_data)
+
+def get_MS2nloss_sqlite(file, nloss_mz, ppm_acc):
+    conn = sqlite3.connect(file)
+    mzmin, mzmax = pmppm(nloss_mz, ppm_acc)
+    query = f"SELECT * FROM MS2 WHERE premz-fragmz BETWEEN {mzmin} AND {mzmax}"
+    query_data = pd.read_sql_query(query, conn)
+    conn.close()
+    return(query_data)
