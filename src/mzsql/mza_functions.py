@@ -23,12 +23,13 @@ def get_chrom_mza(file, mz, ppm):
     scan_dfs = []
     file_keys = sorted(mza["Arrays_intensity"].keys(), key=lambda x: int(x))
     for index, scan_num in enumerate(file_keys):
-        scan_df=pd.DataFrame({
-            "rt": mza["Metadata"][index][6],
-            "mz": mza["Arrays_mz/"+scan_num][...],
-            "int": mza["Arrays_intensity/"+scan_num][...]
-        })
-        scan_dfs.append(scan_df)
+        if mza["Metadata"][index]["MSLevel"] == 1:
+            scan_df=pd.DataFrame({
+                "rt": mza["Metadata"][index]["RetentionTime"],
+                "mz": mza["Arrays_mz/"+scan_num][...],
+                "int": mza["Arrays_intensity/"+scan_num][...]
+            })
+            scan_dfs.append(scan_df)
     mza.close()
     
     file_df = pd.concat(scan_dfs, ignore_index=True)
@@ -72,14 +73,15 @@ def get_rtrange_mza(file, rtstart, rtend):
     scan_dfs = []
     file_keys = sorted(mza["Arrays_intensity"].keys(), key=lambda x: int(x))
     for index, scan_num in enumerate(file_keys):
-        rt_val = mza["Metadata"][index][6]
-        if(rtstart < rt_val < rtend):
-            scan_df=pd.DataFrame({
-                "rt": mza["Metadata"][index][6],
-                "mz": mza["Arrays_mz/"+scan_num][...],
-                "int": mza["Arrays_intensity/"+scan_num][...]
-            })
-            scan_dfs.append(scan_df)
+        if mza["Metadata"][index]["MSLevel"] == 1:
+            rt_val = mza["Metadata"][index]["RetentionTime"]
+            if(rtstart < rt_val < rtend):
+                scan_df=pd.DataFrame({
+                    "rt": mza["Metadata"][index][6],
+                    "mz": mza["Arrays_mz/"+scan_num][...],
+                    "int": mza["Arrays_intensity/"+scan_num][...]
+                })
+                scan_dfs.append(scan_df)
     mza.close()
     rtrange_data = pd.concat(scan_dfs, ignore_index=True)
     return(rtrange_data)
