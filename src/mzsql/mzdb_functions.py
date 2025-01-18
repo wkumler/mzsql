@@ -144,3 +144,107 @@ def get_rtrange_mzdb(file, rtstart, rtend):
 
     connection.close()
     return(rtrange_data)
+
+
+def parse_mzDB_premz_string(precursor_xml):
+    start_index = precursor_xml.find('name="selected ion m/z"')
+    value_index = precursor_xml.find('value="', start_index) + len('value="')
+    end_index = precursor_xml.find('"', value_index)
+    premz_val = float(precursor_xml[value_index:end_index])
+    return(premz_val)
+
+def get_MS2scan_mzdb(mzdb_file, spectrum_idx):
+    connection = sqlite3.connect(mzdb_file)
+    spec_bb_query = "SELECT bb_first_spectrum_id, precursor_list FROM spectrum WHERE id = ?"
+    spectrum_metadata = pd.read_sql(spec_bb_query, connection, params=(spectrum_idx+1,))
+    bb_id_for_scan = spectrum_metadata["bb_first_spectrum_id"][0]
+    precursor_xml = spectrum_metadata["precursor_list"][0]
+
+    premz_val = parse_mzDB_premz_string(precursor_xml)
+    
+    bb_query = """
+    SELECT first_spectrum_id, data
+    FROM bounding_box
+    WHERE first_spectrum_id = ?
+    """
+    
+    bb_dataframe = pd.read_sql(bb_query, connection, params=(str(bb_id_for_scan),))
+    unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
+    bb_spec = pd.concat(unpacked_bb_list)
+    bb_spec.columns = ["fragmz", "int", "scan_id"]
+    scan_data = bb_spec[bb_spec["scan_id"]==spectrum_idx+1]
+    scan_data["premz"] = premz_val
+    
+    connection.close()
+    return(scan_data)
+
+def get_MS2premz_mzdb(mzdb_file, precursor_mz, ppm_acc):
+    connection = sqlite3.connect(mzdb_file)
+    mzmin, mzmax = pmppm(precursor_mz, ppm_acc)
+    spec_bb_query = "SELECT bb_first_spectrum_id, precursor_list FROM spectrum WHERE ms_level = 2"
+    spectrum_metadata = pd.read_sql(spec_bb_query, connection)
+    premz_vals = np.array([parse_mzDB_premz_string(x) for x in spectrum_metadata["precursor_list"]])
+    chosen_scans = spectrum_metadata[(mzmin < premz_vals) & (premz_vals < mzmax)].astype("str")
+    
+    bb_query = """
+    SELECT first_spectrum_id, data
+    FROM bounding_box
+    WHERE first_spectrum_id IN ({})
+    """.format(','.join(chosen_scans["bb_first_spectrum_id"]))
+    
+    bb_dataframe = pd.read_sql(bb_query, connection)
+    unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
+    bb_spec = pd.concat(unpacked_bb_list)
+    bb_spec.columns = ["fragmz", "int", "scan_id"]
+    
+    connection.close()
+    return(bb_spec)
+
+def get_MS2fragmz_mzdb(mzdb_file, fragment_mz, ppm_acc):
+    connection = sqlite3.connect(mzdb_file)
+    spec_bb_query = "SELECT bb_first_spectrum_id, precursor_list FROM spectrum WHERE ms_level = 2"
+    spectrum_metadata = pd.read_sql(spec_bb_query, connection)
+    ms2_query = '''
+    SELECT data, precursor_list
+    FROM bounding_box, spectrum
+    WHERE ms_level = 2
+    AND bounding_box.first_spectrum_id = spectrum.id
+    '''
+    ms2_bbs = pd.read_sql(ms2_query, connection)
+    mzmin, mzmax = pmppm(fragment_mz, ppm_acc)
+    scan_dfs = []
+    premz_vals = np.array([parse_mzDB_premz_string(x) for x in ms2_bbs["precursor_list"]])
+    for index, bb_data in enumerate(ms2_bbs["data"]):
+        scan_data = unpack_raw_bb(bb_data)
+        bet_idxs = (mzmin < scan_data["mz"]) & (scan_data["mz"] < mzmax)
+        frag_data = scan_data[bet_idxs].copy()
+        frag_data.columns = ["fragmz", "int", "scan_id"]
+        frag_data["premz"] = premz_vals[index]
+        scan_dfs.append(frag_data)
+    spectrum_data = pd.concat(scan_dfs)
+    return(spectrum_data)
+
+def get_MS2nloss_mzdb(mzdb_file, neutral_loss, ppm_acc):
+    connection = sqlite3.connect(mzdb_file)
+    spec_bb_query = "SELECT bb_first_spectrum_id, precursor_list FROM spectrum WHERE ms_level = 2"
+    spectrum_metadata = pd.read_sql(spec_bb_query, connection)
+    ms2_query = '''
+    SELECT data, precursor_list
+    FROM bounding_box, spectrum
+    WHERE ms_level = 2
+    AND bounding_box.first_spectrum_id = spectrum.id
+    '''
+    ms2_bbs = pd.read_sql(ms2_query, connection)
+    mzmin, mzmax = pmppm(neutral_loss, ppm_acc)
+    scan_dfs = []
+    premz_vals = np.array([parse_mzDB_premz_string(x) for x in ms2_bbs["precursor_list"]])
+    for index, bb_data in enumerate(ms2_bbs["data"]):
+        scan_data = unpack_raw_bb(bb_data)
+        bet_idxs = (mzmin < premz_vals[index]-scan_data["mz"]) & (premz_vals[index]-scan_data["mz"] < mzmax)
+        frag_data = scan_data[bet_idxs].copy()
+        frag_data.columns = ["fragmz", "int", "scan_id"]
+        frag_data["premz"] = premz_vals[index]
+        scan_dfs.append(frag_data)
+    spectrum_data = pd.concat(scan_dfs)
+    return(spectrum_data)
+
