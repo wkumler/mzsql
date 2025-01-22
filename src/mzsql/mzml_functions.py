@@ -23,13 +23,14 @@ def get_chrom_mzml_pyteomics(file, mz, ppm):
     mzmin, mzmax = pmppm(mz, ppm)
     scan_dfs = []
     for spectrum in pyteomics.mzml.MzML(file):
-        rt_val = spectrum['scanList']['scan'][0]['scan start time']
-        mz_vals=spectrum['m/z array']
-        int_vals = spectrum['intensity array']
-        bet_idxs = (mzmin < spectrum["m/z array"]) & (spectrum["m/z array"] < mzmax)
-        if(sum(bet_idxs)>0):
-            df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
-            scan_dfs.append(df_scan)    
+        if spectrum['ms level'] == 2:
+            rt_val = spectrum['scanList']['scan'][0]['scan start time']
+            mz_vals=spectrum['m/z array']
+            int_vals = spectrum['intensity array']
+            bet_idxs = (mzmin < spectrum["m/z array"]) & (spectrum["m/z array"] < mzmax)
+            if(sum(bet_idxs)>0):
+                df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
+                scan_dfs.append(df_scan)    
     return(pd.concat(scan_dfs, ignore_index=True))
     
 def get_spec_mzml_pyteomics(file, scan_num):
@@ -62,12 +63,13 @@ def get_rtrange_mzml_pyteomics(file, rtstart, rtend):
     """
     scan_dfs = []
     for spectrum in pyteomics.mzml.MzML(file):
-        rt_val = spectrum['scanList']['scan'][0]['scan start time']
-        if(rtstart < rt_val < rtend):
-            mz_vals=spectrum['m/z array']
-            int_vals = spectrum['intensity array']
-            df_scan = pd.DataFrame({'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
-            scan_dfs.append(df_scan)    
+        if spectrum['ms level'] == 1:
+            rt_val = spectrum['scanList']['scan'][0]['scan start time']
+            if(rtstart < rt_val < rtend):
+                mz_vals=spectrum['m/z array']
+                int_vals = spectrum['intensity array']
+                df_scan = pd.DataFrame({'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
+                scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
 
 
