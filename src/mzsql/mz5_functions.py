@@ -24,12 +24,13 @@ def get_chrom_mz5(file, mz, ppm):
     
     scan_dfs = []
     for index, row in bounds_df.iterrows():
-        scan_df = pd.DataFrame({
-            "rt": mz5_file["ChomatogramTime"][...][index],
-            "mz": np.cumsum(mz5_file["SpectrumMZ"][row["lower"]:row["upper"]]),
-            "int": mz5_file["SpectrumIntensity"][row["lower"]:row["upper"]]
-        })
-        scan_dfs.append(scan_df)
+        if(len(mz5_file["SpectrumMetaData"]["precursors"][index])==0):
+            scan_df = pd.DataFrame({
+                "rt": mz5_file["ChomatogramTime"][...][index],
+                "mz": np.cumsum(mz5_file["SpectrumMZ"][row["lower"]:row["upper"]]),
+                "int": mz5_file["SpectrumIntensity"][row["lower"]:row["upper"]]
+            })
+            scan_dfs.append(scan_df)
     file_df = pd.concat(scan_dfs, ignore_index=True)
     
     mzmin, mzmax = pmppm(mz, ppm)
@@ -49,7 +50,6 @@ def get_spec_mz5(file, scan_num):
     Returns:
         pd.DataFrame: A DataFrame containing m/z and intensity values for the specified scan.
     """
-    # Double-check that pyteomics doesn't have a function for this already
     mz5_file = h5py.File(file, 'r')
     scan_idxs = np.concatenate(([0], mz5_file["SpectrumIndex"][...]))
     lower_bound = scan_idxs[scan_num]
@@ -82,12 +82,13 @@ def get_rtrange_mz5(file, rtstart, rtend):
     scan_dfs = []
     for index, rt_val in enumerate(mz5_file["ChomatogramTime"][...]):
         if(rtstart < rt_val < rtend):
-            scan_df = pd.DataFrame({
-                "rt": rt_val,
-                "mz": np.cumsum(mz5_file["SpectrumMZ"][scan_idxs[index]:scan_idxs[index+1]]),
-                "int": mz5_file["SpectrumIntensity"][scan_idxs[index]:scan_idxs[index+1]]
-            })
-            scan_dfs.append(scan_df)
+            if(len(mz5_file["SpectrumMetaData"]["precursors"][index])==0):
+                scan_df = pd.DataFrame({
+                    "rt": rt_val,
+                    "mz": np.cumsum(mz5_file["SpectrumMZ"][scan_idxs[index]:scan_idxs[index+1]]),
+                    "int": mz5_file["SpectrumIntensity"][scan_idxs[index]:scan_idxs[index+1]]
+                })
+                scan_dfs.append(scan_df)
     file_df = pd.concat(scan_dfs, ignore_index=True)
     mz5_file.close()
     return(file_df)
