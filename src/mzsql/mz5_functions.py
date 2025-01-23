@@ -6,50 +6,27 @@ from .helpers import pmppm
 
 
 def get_chrom_mz5(file, mz, ppm):
-    """
-    Retrieves chromatogram data from an mz5 file for a specified m/z range.
-
-    Args:
-        file (str): Path to the mz5 file to be processed.
-        mz (float): The target m/z value.
-        ppm (float): The allowed mass tolerance in parts per million (ppm).
-
-    Returns:
-        pd.DataFrame: A DataFrame containing m/z, intensity, and retention time data 
-                      for the specified m/z range.
-    """
     mz5_file = h5py.File(file, 'r')
     bounds_df = pd.DataFrame({"lower":np.concatenate(([0], mz5_file["SpectrumIndex"][...][:-1])),
                               "upper":mz5_file["SpectrumIndex"][...]})
     
+    mzmin, mzmax = pmppm(mz, ppm)
+    has_precursor = [len(item)>0 for item in mz5_file["SpectrumMetaData"]["precursors"]]
     scan_dfs = []
     for index, row in bounds_df.iterrows():
-        if(len(mz5_file["SpectrumMetaData"]["precursors"][index])==0):
+        if(not(has_precursor[index])):
             scan_df = pd.DataFrame({
-                "rt": mz5_file["ChomatogramTime"][...][index],
+                "rt": mz5_file["ChomatogramTime"][index],
                 "mz": np.cumsum(mz5_file["SpectrumMZ"][row["lower"]:row["upper"]]),
                 "int": mz5_file["SpectrumIntensity"][row["lower"]:row["upper"]]
             })
-            scan_dfs.append(scan_df)
+            bet_df = scan_df[(scan_df["mz"]>mzmin) & (scan_df["mz"]<mzmax)]
+            scan_dfs.append(bet_df)
     file_df = pd.concat(scan_dfs, ignore_index=True)
-    
-    mzmin, mzmax = pmppm(mz, ppm)
-    bet_df = file_df[(file_df["mz"]>mzmin) & (file_df["mz"]<mzmax)]
-    
     mz5_file.close()
-    return(bet_df)
+    return(file_df)
 
 def get_spec_mz5(file, scan_num):
-    """
-    Retrieves spectrum data for a specific scan number from an mz5 file.
-
-    Args:
-        file (str): Path to the mz5 file.
-        scan_num (int): The scan number to retrieve.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing m/z and intensity values for the specified scan.
-    """
     mz5_file = h5py.File(file, 'r')
     scan_idxs = np.concatenate(([0], mz5_file["SpectrumIndex"][...]))
     lower_bound = scan_idxs[scan_num]
@@ -59,22 +36,6 @@ def get_spec_mz5(file, scan_num):
     return(pd.DataFrame({"mz":mz_vals, "int":int_vals}))
 
 def get_rtrange_mz5(file, rtstart, rtend):
-    """
-    Retrieves spectrum data within a specified retention time range from an mz5 file.
-    
-    Note:
-        This function may not yet be fully functional and currently returns scans
-        without relevant spectra.
-
-    Args:
-        file (str): Path to the mz5 file.
-        rtstart (float): The start retention time value.
-        rtend (float): The end retention time value.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing m/z and intensity values for spectra 
-                      within the specified retention time range.
-    """
     print("Warning: get_rtrange_mz5 does not yet seem to be functional")
     print("Warning: returns scans without relevant spectra")
     mz5_file = h5py.File(file, 'r')
