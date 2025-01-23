@@ -73,7 +73,7 @@ def get_chrom_mzdb(file, mz, ppm):
     FROM run_slice, bounding_box, spectrum
     WHERE bounding_box.run_slice_id = run_slice.id
     AND bounding_box.first_spectrum_id = spectrum.id
-    AND ms_level = 1
+    AND spectrum.ms_level = 1
     AND begin_mz = ?
     """
     bb_dataframe = pd.read_sql(bb_query, connection, params=(bb_id_for_chrom,))
@@ -134,7 +134,7 @@ def get_rtrange_mzdb(file, rtstart, rtend):
     SELECT DISTINCT bounding_box.data
     FROM bounding_box, spectrum
     WHERE bounding_box.first_spectrum_id = spectrum.bb_first_spectrum_id
-    AND ms_level = 1
+    AND spectrum.ms_level = 1
     AND spectrum.time BETWEEN ? AND ?
     """
     bb_dataframe = pd.read_sql(bb_query, connection, params=(rtstart*60, rtend*60))
