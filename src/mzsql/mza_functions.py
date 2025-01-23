@@ -6,20 +6,9 @@ import mzapy
 from .helpers import pmppm
 
 def get_chrom_mza(file, mz, ppm):
-    """
-    Retrieves chromatogram data from an MZA file for a specified m/z range.
-
-    Args:
-        file (str): Path to the MZA file to be processed.
-        mz (float): The target m/z value.
-        ppm (float): The allowed mass tolerance in parts per million (ppm).
-
-    Returns:
-        pd.DataFrame: A DataFrame containing m/z, intensity, and retention time data 
-                      for the specified m/z range.
-    """
     mza = h5py.File(file, 'r')
-    
+    mzmin, mzmax = pmppm(mz, ppm)
+
     scan_dfs = []
     file_keys = sorted(mza["Arrays_intensity"].keys(), key=lambda x: int(x))
     for index, scan_num in enumerate(file_keys):
@@ -29,13 +18,11 @@ def get_chrom_mza(file, mz, ppm):
                 "mz": mza["Arrays_mz/"+scan_num][...],
                 "int": mza["Arrays_intensity/"+scan_num][...]
             })
-            scan_dfs.append(scan_df)
+            bet_df = scan_df[(scan_df["mz"]>mzmin) & (scan_df["mz"]<mzmax)]
+            scan_dfs.append(bet_df)
     mza.close()
     
-    file_df = pd.concat(scan_dfs, ignore_index=True)
-    
-    mzmin, mzmax = pmppm(mz, ppm)
-    chrom_data = file_df[(file_df["mz"]>mzmin) & (file_df["mz"]<mzmax)]
+    chrom_data = pd.concat(scan_dfs, ignore_index=True)
     return(chrom_data)
     
 def get_spec_mza(file, spectrum_idx):
