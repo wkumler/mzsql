@@ -23,7 +23,7 @@ def get_chrom_mzml_pyteomics(file, mz, ppm):
     mzmin, mzmax = pmppm(mz, ppm)
     scan_dfs = []
     for spectrum in pyteomics.mzml.MzML(file):
-        if spectrum['ms level'] == 2:
+        if spectrum['ms level'] == 1:
             rt_val = spectrum['scanList']['scan'][0]['scan start time']
             mz_vals=spectrum['m/z array']
             int_vals = spectrum['intensity array']
