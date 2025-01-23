@@ -15,6 +15,7 @@ dependencies = [
     "pymzml",
     "h5py",
     "duckdb",
+    "pyarrow",
     "mzapy"
 ]
 
