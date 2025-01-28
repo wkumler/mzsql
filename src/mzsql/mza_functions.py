@@ -166,25 +166,6 @@ def get_chrom_mzapy(file, mz, ppm):
     chrom_data = pd.DataFrame({"rt":xic_rt, "int":xic_int})
     return(chrom_data)
     
-def get_spec_mzapy(file, spectrum_idx):
-    """
-    Retrieves spectrum data for a specific scan index from an mzapy MZA file.
-
-    Args:
-        file (str): Path to the mzapy file.
-        spectrum_idx (int): The scan index of the spectrum to retrieve.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing m/z and intensity values for the specified spectrum.
-    """
-    mza=mzapy.MZA(file)
-    mean_rt_diff = np.mean(np.diff(mza.rt))
-    rt_min, rt_max = mza.rt[spectrum_idx-1]-mean_rt_diff/100, mza.rt[spectrum_idx-1]+mean_rt_diff/100
-    mz_array, int_array = mza.collect_ms1_arrays_by_rt(rt_min, rt_max)
-    mza.close()
-    spec_df = pd.DataFrame({"mz":mz_array, "int":int_array})
-    return(spec_df)
-
 def get_rtrange_mzapy(file, rtstart, rtend):
     """
     Retrieves spectrum data within a specified retention time range from an mzapy MZA file.

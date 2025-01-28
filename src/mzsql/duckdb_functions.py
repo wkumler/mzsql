@@ -51,8 +51,8 @@ def get_chrom_duckdb(file, mz, ppm):
 
 def get_spec_duckdb(file, spectrum_idx):
     conn = duckdb.connect(file)
-    query = "SELECT * FROM MS1 WHERE id = ?"
-    spectrum_data = conn.execute(query, (spectrum_idx,)).fetchdf()
+    query = "SELECT id, mz, int FROM MS1 WHERE id = ? UNION ALL SELECT id, fragmz AS mz, int FROM MS2 WHERE id = ?"
+    spectrum_data = conn.execute(query, (spectrum_idx, spectrum_idx)).fetchdf()
     conn.close()
     return spectrum_data
 
@@ -62,14 +62,6 @@ def get_rtrange_duckdb(file, rtstart, rtend):
     rt_range_data = conn.execute(query, (rtstart, rtend)).fetchdf()
     conn.close()
     return rt_range_data
-
-
-def get_MS2scan_duckdb(file, spectrum_idx):
-    conn = duckdb.connect(file)
-    query = "SELECT * FROM MS2 WHERE id = ?"
-    spectrum_data = conn.execute(query, (spectrum_idx,)).fetchdf()
-    conn.close()
-    return(spectrum_data)
 
 def get_MS2fragmz_duckdb(file, fragment_mz, ppm_acc):
     conn = duckdb.connect(file)
