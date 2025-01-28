@@ -101,9 +101,8 @@ def get_spec_sqlite(file, spectrum_idx):
         raise FileNotFoundError(f"Database '{file}' does not exist.")
 
     conn = sqlite3.connect(file)
-    query = f"SELECT * FROM MS1 WHERE id = {spectrum_idx}"
+    query = f"SELECT id, mz, int FROM MS1 WHERE id = {spectrum_idx} UNION ALL SELECT id, fragmz AS mz, int FROM MS2 WHERE id = {spectrum_idx}"
     spectrum_data = pd.read_sql_query(query, conn)
-
     conn.close()
 
     return spectrum_data
@@ -139,13 +138,6 @@ def get_rtrange_sqlite(file, rtstart, rtend):
     
     return rt_range_data
 
-
-def get_MS2scan_sqlite(file, spectrum_idx):
-    conn = sqlite3.connect(file)
-    query = f"SELECT * FROM MS2 WHERE id ={spectrum_idx}"
-    query_data = pd.read_sql_query(query, conn)
-    conn.close()
-    return(query_data)
 
 def get_MS2fragmz_sqlite(file, fragment_mz, ppm_acc):
     conn = sqlite3.connect(file)

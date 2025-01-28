@@ -23,28 +23,25 @@ def get_chrom_mzml_pyteomics(file, mz, ppm):
     mzmin, mzmax = pmppm(mz, ppm)
     scan_dfs = []
     for spectrum in pyteomics.mzml.MzML(file):
-        rt_val = spectrum['scanList']['scan'][0]['scan start time']
-        mz_vals=spectrum['m/z array']
-        int_vals = spectrum['intensity array']
-        bet_idxs = (mzmin < spectrum["m/z array"]) & (spectrum["m/z array"] < mzmax)
-        if(sum(bet_idxs)>0):
-            df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
-            scan_dfs.append(df_scan)    
+        if spectrum['ms level'] == 1:
+            rt_val = spectrum['scanList']['scan'][0]['scan start time']
+            mz_vals=spectrum['m/z array']
+            int_vals = spectrum['intensity array']
+            bet_idxs = (mzmin < spectrum["m/z array"]) & (spectrum["m/z array"] < mzmax)
+            if(sum(bet_idxs)>0):
+                df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
+                scan_dfs.append(df_scan)    
     return(pd.concat(scan_dfs, ignore_index=True))
     
 def get_spec_mzml_pyteomics(file, scan_num):
-    """
-    Retrieves spectrum data for a specific scan number from a mzML file using pyteomics.
-
-    Args:
-        file (str): Path to the mzML file.
-        scan_num (int): The scan number.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing m/z and intensity data for the specified scan number.
-    """
     file_data = pyteomics.mzml.MzML(file)
-    return(pd.DataFrame({"mz":file_data[scan_num]['m/z array'], "int":file_data[scan_num]['intensity array']}))
+    i = 0
+    while i <= len(file_data):
+        if(int(file_data[i]['id'].split("scan=")[-1].split()[0]) == scan_num):
+            return(pd.DataFrame({"mz":file_data[i]['m/z array'], "int":file_data[i]['intensity array']}))
+        else:
+            i += 1
+    raise Exception(f"No scan number {scan_num} found")
 
 
 def get_rtrange_mzml_pyteomics(file, rtstart, rtend):
@@ -62,14 +59,56 @@ def get_rtrange_mzml_pyteomics(file, rtstart, rtend):
     """
     scan_dfs = []
     for spectrum in pyteomics.mzml.MzML(file):
-        rt_val = spectrum['scanList']['scan'][0]['scan start time']
-        if(rtstart < rt_val < rtend):
-            mz_vals=spectrum['m/z array']
-            int_vals = spectrum['intensity array']
-            df_scan = pd.DataFrame({'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
-            scan_dfs.append(df_scan)    
+        if spectrum['ms level'] == 1:
+            rt_val = spectrum['scanList']['scan'][0]['scan start time']
+            if(rtstart < rt_val < rtend):
+                mz_vals=spectrum['m/z array']
+                int_vals = spectrum['intensity array']
+                df_scan = pd.DataFrame({'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(mz_vals)})
+                scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
 
+def get_MS2premz_mzml_pyteomics(mzml_file, precursor_mz, ppm):
+    mzmin, mzmax = pmppm(precursor_mz, ppm)
+    scan_dfs = []
+    for spectrum in pyteomics.mzml.MzML(mzml_file):
+        if spectrum['ms level'] == 2:
+            rt_val = spectrum['scanList']['scan'][0]['scan start time']
+            premz_val = spectrum["precursorList"]["precursor"][0]["isolationWindow"]['isolation window target m/z']
+            if mzmin < premz_val < mzmax:
+                mz_vals=spectrum['m/z array']
+                int_vals = spectrum['intensity array']
+                df_scan = pd.DataFrame({'rt':rt_val, 'premz':premz_val, 'fragmz':mz_vals, 'int':int_vals})
+                scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
+
+def get_MS2fragmz_mzml_pyteomics(mzml_file, fragment_mz, ppm):
+    mzmin, mzmax = pmppm(fragment_mz, ppm)
+    scan_dfs = []
+    for spectrum in pyteomics.mzml.MzML(mzml_file):
+        if spectrum['ms level'] == 2:
+            rt_val = spectrum['scanList']['scan'][0]['scan start time']
+            premz_val = spectrum["precursorList"]["precursor"][0]["isolationWindow"]['isolation window target m/z']
+            chosen_frag_idxs = (mzmin < spectrum['m/z array']) & (spectrum['m/z array'] < mzmax)
+            mz_vals=spectrum['m/z array'][chosen_frag_idxs]
+            int_vals = spectrum['intensity array'][chosen_frag_idxs]
+            df_scan = pd.DataFrame({'rt':rt_val, 'premz':premz_val, 'fragmz':mz_vals, 'int':int_vals})
+            scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
+
+def get_MS2nloss_mzml_pyteomics(mzml_file, neutral_loss, ppm):
+    mzmin, mzmax = pmppm(neutral_loss, ppm)
+    scan_dfs = []
+    for spectrum in pyteomics.mzml.MzML(mzml_file):
+        if spectrum['ms level'] == 2:
+            rt_val = spectrum['scanList']['scan'][0]['scan start time']
+            premz_val = spectrum["precursorList"]["precursor"][0]["isolationWindow"]['isolation window target m/z']
+            chosen_frag_idxs = (mzmin < premz_val-spectrum['m/z array']) & (premz_val-spectrum['m/z array'] < mzmax)
+            mz_vals=spectrum['m/z array'][chosen_frag_idxs]
+            int_vals = spectrum['intensity array'][chosen_frag_idxs]
+            df_scan = pd.DataFrame({'rt':rt_val, 'premz':premz_val, 'fragmz':mz_vals, 'int':int_vals})
+            scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
 
 
 # pyopenms things
@@ -91,12 +130,13 @@ def get_chrom_mzml_pyopenms(file, mz, ppm):
     mzmin, mzmax = pmppm(mz, ppm)
     scan_dfs = []
     for spectrum in exp:
-        rt_val = spectrum.getRT()
-        mz_vals, int_vals = spectrum.get_peaks()
-        bet_idxs = (mzmin < mz_vals) & (mz_vals < mzmax)
-        if(sum(bet_idxs)>0):
-            df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
-            scan_dfs.append(df_scan)    
+        if(spectrum.getMSLevel()==1):
+            rt_val = spectrum.getRT()
+            mz_vals, int_vals = spectrum.get_peaks()
+            bet_idxs = (mzmin < mz_vals) & (mz_vals < mzmax)
+            if(sum(bet_idxs)>0):
+                df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
+                scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
     
 def get_chrom_mzml_pyopenms_2DPeak(file, mz, ppm):
@@ -120,20 +160,16 @@ def get_chrom_mzml_pyopenms_2DPeak(file, mz, ppm):
     return(pd.DataFrame({"rt":chrom_data[0], "mz":chrom_data[1], "int":chrom_data[2]}))
     
 def get_spec_mzml_pyopenms(file, scan_num):
-    """
-    Retrieves spectrum data for a specific scan number from a mzML file using pyopenms.
-
-    Args:
-        file (str): Path to the mzML file.
-        scan_num (int): The scan number.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing m/z and intensity data for the specified scan number.
-    """
     exp = pyopenms.MSExperiment()
     pyopenms.MzMLFile().load(file, exp)
-    spec1_data = exp[scan_num].get_peaks()
-    return(pd.DataFrame({"mz":spec1_data[0], "int":spec1_data[1]}))
+    i = 0
+    while i <= exp.size():
+        if(int(exp[i].getNativeID().split("scan=")[-1].split()[0]) == scan_num):
+            spec_data = exp[i].get_peaks()
+            return(pd.DataFrame({"mz":spec_data[0], "int":spec_data[1]}))
+        else:
+            i += 1
+    raise Exception(f"No scan number {scan_num} found")
     
 def get_rtrange_mzml_pyopenms(file, rtstart, rtend):
     """
@@ -153,11 +189,12 @@ def get_rtrange_mzml_pyopenms(file, rtstart, rtend):
     exp.updateRanges()
     scan_dfs = []
     for spectrum in exp:
-        rt_val = spectrum.getRT()
-        if(rtstart*60 < rt_val < rtend*60):
-            mz_vals, int_vals = spectrum.get_peaks()
-            df_scan = pd.DataFrame({'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(int_vals)})
-            scan_dfs.append(df_scan)
+        if(spectrum.getMSLevel()==1):
+            rt_val = spectrum.getRT()
+            if(rtstart*60 < rt_val < rtend*60):
+                mz_vals, int_vals = spectrum.get_peaks()
+                df_scan = pd.DataFrame({'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(int_vals)})
+                scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
     
 def get_rtrange_mzml_pyopenms_2DPeak(file, rtstart, rtend):
@@ -179,6 +216,52 @@ def get_rtrange_mzml_pyopenms_2DPeak(file, rtstart, rtend):
     rtrange_data=exp.get2DPeakDataLong(min_mz=exp.getMinMZ(), max_mz=exp.getMaxMZ(), min_rt=rtstart*60, max_rt=rtend*60)
     return(pd.DataFrame({"rt":rtrange_data[0], "mz":rtrange_data[1], "int":rtrange_data[2]}))
 
+def get_MS2premz_mzml_pyopenms(mzml_file, precursor_mz, ppm_acc):
+    exp = pyopenms.MSExperiment()
+    pyopenms.MzMLFile().load(mzml_file, exp)
+    mzmin, mzmax = pmppm(precursor_mz, ppm_acc)
+    scan_dfs = []
+    for spectrum in exp:
+        if(spectrum.getMSLevel()==2):
+            premz_val = spectrum.getPrecursors()[0].getMZ()
+            if(mzmin < premz_val < mzmax):
+                rt_val = spectrum.getRT()/60
+                spec_data = spectrum.get_peaks()
+                df_scan = pd.DataFrame({"rt":rt_val, "premz":premz_val, "fragmz":spec_data[0], "int":spec_data[1]})
+                scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
+
+def get_MS2fragmz_mzml_pyopenms(mzml_file, fragment_mz, ppm_acc):
+    exp = pyopenms.MSExperiment()
+    pyopenms.MzMLFile().load(mzml_file, exp)
+    mzmin, mzmax = pmppm(fragment_mz, ppm_acc)
+    scan_dfs = []
+    for spectrum in exp:
+        if(spectrum.getMSLevel()==2):
+            premz_val = spectrum.getPrecursors()[0].getMZ()
+            rt_val = spectrum.getRT()
+            mz_vals, int_vals = spectrum.get_peaks()
+            bet_idxs = (mzmin < mz_vals) & (mz_vals < mzmax)
+            if(sum(bet_idxs)>0):
+                df_scan = pd.DataFrame({"rt":rt_val, "premz":premz_val, "fragmz":mz_vals[bet_idxs], "int":int_vals[bet_idxs]})
+                scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
+    
+def get_MS2nloss_mzml_pyopenms(mzml_file, neutral_loss, ppm_acc):
+    exp = pyopenms.MSExperiment()
+    pyopenms.MzMLFile().load(mzml_file, exp)
+    mzmin, mzmax = pmppm(neutral_loss, ppm_acc)
+    scan_dfs = []
+    for spectrum in exp:
+        if(spectrum.getMSLevel()==2):
+            premz_val = spectrum.getPrecursors()[0].getMZ()
+            rt_val = spectrum.getRT()
+            mz_vals, int_vals = spectrum.get_peaks()
+            bet_idxs = (mzmin < premz_val-mz_vals) & (premz_val-mz_vals < mzmax)
+            if(sum(bet_idxs)>0):
+                df_scan = pd.DataFrame({"rt":rt_val, "premz":premz_val, "fragmz":mz_vals[bet_idxs], "int":int_vals[bet_idxs]})
+                scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
 
 
 
@@ -202,14 +285,15 @@ def get_chrom_mzml_pymzml(file, mz, ppm):
     mzmin, mzmax = pmppm(mz, ppm)
     scan_dfs = []
     for spectrum in run:
-        rt_val = spectrum.scan_time_in_minutes()
-        mz_vals = spectrum.mz
-        int_vals = spectrum.i
-        bet_idxs = (mzmin < mz_vals) & (mz_vals < mzmax)
-    
-        if(sum(bet_idxs)>0):
-            df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
-            scan_dfs.append(df_scan)
+        if(spectrum.ms_level==1):
+            rt_val = spectrum.scan_time_in_minutes()
+            mz_vals = spectrum.mz
+            int_vals = spectrum.i
+            bet_idxs = (mzmin < mz_vals) & (mz_vals < mzmax)
+        
+            if(sum(bet_idxs)>0):
+                df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
+                scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
 
 def get_spec_mzml_pymzml(file, scan_num):
@@ -241,10 +325,55 @@ def get_rtrange_mzml_pymzml(file, rtstart, rtend):
     run = pymzml.run.Reader(file, build_index_from_scratch=True)  
     scan_dfs = []
     for spectrum in run:
-        rt_val = spectrum.scan_time_in_minutes()
-        if(rtstart < rt_val < rtend):
-            df_scan = pd.DataFrame({'mz':spectrum.mz, 'int':spectrum.i, 'rt':[rt_val]*len(spectrum.i)})
-            scan_dfs.append(df_scan)
+        if(spectrum.ms_level==1):
+            rt_val = spectrum.scan_time_in_minutes()
+            if(rtstart < rt_val < rtend):
+                df_scan = pd.DataFrame({'mz':spectrum.mz, 'int':spectrum.i, 'rt':[rt_val]*len(spectrum.i)})
+                scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
 
+def get_MS2premz_mzml_pymzml(mzml_file, precursor_mz, ppm_acc):
+    run = pymzml.run.Reader(mzml_file, build_index_from_scratch=True)
+    mzmin, mzmax = pmppm(precursor_mz, ppm_acc)
+    scan_dfs = []
+    for spectrum in run:
+        if(spectrum.ms_level==2):
+            premz_val = spectrum.selected_precursors[0]["mz"]
+            if(mzmin < premz_val < mzmax):
+                rt_val = spectrum.scan_time_in_minutes()
+                df_scan = pd.DataFrame({"rt":rt_val, "premz":premz_val, "fragmz":spectrum.mz, "int":spectrum.i})
+                scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
+
+def get_MS2fragmz_mzml_pymzml(mzml_file, fragment_mz, ppm_acc):
+    run = pymzml.run.Reader(mzml_file, build_index_from_scratch=True)
+    mzmin, mzmax = pmppm(fragment_mz, ppm_acc)
+    scan_dfs = []
+    for spectrum in run:
+        if(spectrum.ms_level==2):
+            rt_val = spectrum.scan_time_in_minutes()
+            premz_val = spectrum.selected_precursors[0]["mz"]
+            mz_vals = spectrum.mz
+            int_vals = spectrum.i
+            bet_idxs = (mzmin < mz_vals) & (mz_vals < mzmax)
+            if(sum(bet_idxs)>0):
+                df_scan = pd.DataFrame({"rt":rt_val, "premz":premz_val, "fragmz":mz_vals[bet_idxs], "int":int_vals[bet_idxs]})
+                scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
+
+def get_MS2nloss_mzml_pymzml(mzml_file, neutral_loss, ppm_acc):
+    run = pymzml.run.Reader(mzml_file, build_index_from_scratch=True)
+    mzmin, mzmax = pmppm(neutral_loss, ppm_acc)
+    scan_dfs = []
+    for spectrum in run:
+        if(spectrum.ms_level==2):
+            rt_val = spectrum.scan_time_in_minutes()
+            premz_val = spectrum.selected_precursors[0]["mz"]
+            mz_vals = spectrum.mz
+            int_vals = spectrum.i
+            bet_idxs = (mzmin < premz_val-mz_vals) & (premz_val-mz_vals < mzmax)
+            if(sum(bet_idxs)>0):
+                df_scan = pd.DataFrame({"rt":rt_val, "premz":premz_val, "fragmz":mz_vals[bet_idxs], "int":int_vals[bet_idxs]})
+                scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
 
