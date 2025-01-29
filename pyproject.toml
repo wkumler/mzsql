@@ -16,7 +16,7 @@ dependencies = [
     "h5py",
     "duckdb",
     "mzapy",
-    "lxml"
+    "lxml",
     "pyarrow",
     "mzapy"
 ]
