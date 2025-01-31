@@ -36,14 +36,14 @@ def get_spec_mz5(file, scan_num):
     return(pd.DataFrame({"mz":mz_vals, "int":int_vals}))
 
 def get_rtrange_mz5(file, rtstart, rtend):
-    print("Warning: get_rtrange_mz5 does not yet seem to be functional")
-    print("Warning: returns scans without relevant spectra")
     mz5_file = h5py.File(file, 'r')
     scan_idxs = np.concatenate(([0], mz5_file["SpectrumIndex"][...]))
     scan_dfs = []
+    has_precursor = [len(item)>0 for item in mz5_file["SpectrumMetaData"]["precursors"]]
+    
     for index, rt_val in enumerate(mz5_file["ChomatogramTime"][...]):
         if(rtstart < rt_val < rtend):
-            if(len(mz5_file["SpectrumMetaData"]["precursors"][index])==0):
+            if(not(has_precursor[index])):
                 scan_df = pd.DataFrame({
                     "rt": rt_val,
                     "mz": np.cumsum(mz5_file["SpectrumMZ"][scan_idxs[index]:scan_idxs[index+1]]),
