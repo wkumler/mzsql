@@ -1,0 +1,14 @@
+method,file_size
+mzml_pyteomics,83041715
+mzml_pyopenms,83041715
+mzml_pyopenms_2DPeak,83041715
+mzml_pymzml,83041715
+mzmlb,22123506
+mzdb,108167168
+mza,54242326
+mz5,27568188
+sqlite,144912384
+duckdb,40906752
+parquet,39542523
+mztree,16150528
+mzMD,95887360
