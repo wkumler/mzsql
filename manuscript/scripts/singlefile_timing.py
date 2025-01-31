@@ -124,6 +124,7 @@ for name, suffix, filetype in function_list:
             os.path.getsize("E:/mzsql/MTBLS10066/01-30-2025_10-35-06.mzTree"),
             os.path.getsize("E:/mzsql/MTBLS10066/01-30-2025_10-35-06.mzTree-points")
         ])
+        file_sizes[name] = total_size
     elif(name == "Parquet"):
         dirsize = sum(
             os.path.getsize(os.path.join(root, f)) 
