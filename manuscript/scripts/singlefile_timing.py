@@ -60,7 +60,6 @@ function_list = [
     ("mzMLb", "mzmlb", ".mzMLb"),
     ("mzDB", "mzdb", ".raw.mzDB"),
     ("MZA", "mza", ".mza"),
-    ("mzapy", "mzapy", ".mza"),
     ("mz5", "mz5", ".mz5"),
     ("SQLite", "sqlite", ".sqlite"),
     ("DuckDB", "duckdb", ".duckdb"),
