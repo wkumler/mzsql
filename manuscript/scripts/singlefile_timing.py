@@ -61,11 +61,11 @@ function_list = [
     ("mzDB", "mzdb", ".raw.mzDB"),
     ("MZA", "mza", ".mza"),
     ("mz5", "mz5", ".mz5"),
+    ("MZTree", "mztree", "http://127.0.0.1:4568"),
+    ("mzMD", "mzMD", "http://127.0.0.1:4567"),
     ("SQLite", "sqlite", ".sqlite"),
     ("DuckDB", "duckdb", ".duckdb"),
-    ("Parquet", "parquet", "_pqds"),
-    ("MZTree", "mztree", "http://127.0.0.1:4568"),
-    ("mzMD", "mzMD", "http://127.0.0.1:4567")
+    ("Parquet", "parquet", "_pqds")
 ]
 
 # Create a CSV to store the data in
@@ -75,7 +75,7 @@ init_df.to_csv('data/singlefile_times.csv', index=False)
 # And perform the timings!
 for target_spec in rand_MS1_scans:
     print(target_spec)
-    for name, suffix, filetype in [function_list[i] for i in [0, 1, 3, 4,5,6,8,9,10,11]]:
+    for name, suffix, filetype in [function_list[i] for i in [0, 1, 3, 4,5,6,7,10,11,12]]:
         time_taken = time_spec(suffix, filetype, target_spec, verbose=True)
         time_df = pd.DataFrame({"query":["ms1_spec"], "target":[target_spec], "method":[name], "time":time_taken})
         time_df.to_csv('data/singlefile_times.csv', mode='a', header=False, index=False)
@@ -96,41 +96,41 @@ for target_rt in top_rts:
 
 for target_spec in rand_MS2_scans:
     print(target_spec)
-    for name, suffix, filetype in [function_list[i] for i in [0, 1, 3, 4,5,6,8,9,10,11]]:
+    for name, suffix, filetype in [function_list[i] for i in [0, 1, 3, 4, 5, 6, 7, 10, 11, 12]]:
         time_taken = time_spec(suffix, filetype, target_spec, verbose=True)
         time_df = pd.DataFrame({"query":["ms2_spec"], "target":[target_spec], "method":[name], "time":time_taken})
         time_df.to_csv('data/singlefile_times.csv', mode='a', header=False, index=False)
 
 for target_pre in top_precursors:
     print(target_pre)
-    for name, suffix, filetype in [function_list[i] for i in [0, 1, 3, 4,5,6,9,10,11]]:
+    for name, suffix, filetype in [function_list[i] for i in [0, 1, 3, 4, 5, 6, 10, 11, 12]]:
         time_taken = time_premz(suffix, filetype, target_pre, 10, verbose=True)
         time_df = pd.DataFrame({"query":["premz"], "target":[target_pre], "method":[name], "time":time_taken})
         time_df.to_csv('data/singlefile_times.csv', mode='a', header=False, index=False)
 
 for target_frag in top_fragments:
     print(target_frag)
-    for name, suffix, filetype in [function_list[i] for i in [0, 1, 3, 4,5,6,9,10,11]]:
+    for name, suffix, filetype in [function_list[i] for i in [0, 1, 3, 4, 5, 6, 10, 11, 12]]:
         time_taken = time_fragmz(suffix, filetype, target_frag, 10, verbose=True)
         time_df = pd.DataFrame({"query":["fragmz"], "target":[target_frag], "method":[name], "time":time_taken})
         time_df.to_csv('data/singlefile_times.csv', mode='a', header=False, index=False)
 
-print("Success!")
-
 file_sizes = {}
 for name, suffix, filetype in function_list:
     if(name == "mzMD"):
-        file_sizes[suffix] = os.path.getsize("E:/mzsql/MTBLS10066/result.mzMD")
+        file_sizes[name] = os.path.getsize("E:/mzsql/MTBLS10066/result.mzMD")
     elif(name == "MZTree"):
-        file_sizes[suffix] = os.path.getsize("E:/mzsql/MTBLS10066/01-30-2025_10-35-06.mzTree")
+        file_sizes[name] = os.path.getsize("E:/mzsql/MTBLS10066/01-30-2025_10-35-06.mzTree")
     elif(name == "Parquet"):
         dirsize = sum(
             os.path.getsize(os.path.join(root, f)) 
             for root, _, files in os.walk("E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01_pqds") 
             for f in files
         )
-        file_sizes[suffix] = dirsize
+        file_sizes[name] = dirsize
     else:
-        file_sizes[suffix] = os.path.getsize(f"E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01{filetype}")
+        file_sizes[name] = os.path.getsize(f"E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01{filetype}")
 
 pd.DataFrame(file_sizes.items(), columns=["method", "file_size"]).to_csv("data/file_sizes.csv", index=False)
+
+print("Success!")
