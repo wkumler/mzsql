@@ -51,19 +51,38 @@ Metabolights search for
 3. 100+ GB folder
 4. Positive mode only(?)
 
-```{r}
-download.file("https://ftp.ebi.ac.uk/pub/databases/metabolights/studies/public/MTBLS10096/FILES/DERIVED_FILES/POS/Feuille_Extrait_1_ESI_pos_01_7273.mzXML", mode = "wb", destfile = "../massive_data/Feuille_Extrait_1_ESI_pos_01_7273.mzXML")
-
-download.file("ftp://massive.ucsd.edu/v01/MSV000080030/peak/Forensic_study_80_volunteers/Forensic_Hands_mzXML/Forensic_Hands_plate_1_mzXML/Sample/P1_1D10v7_Palm_GD10_01_24008.mzXML", "../massive_data/P1_1D10v7_Palm_GD10_01_24008.mzXML", mode = "wb")
-
-download.file("https://ftp.ebi.ac.uk/pub/databases/metabolights/studies/public/MTBLS417/FILES/CS52684_pos_SWATH.mzXML", mode = "wb", destfile = "../massive_data/CS52684_pos_SWATH.mzXML")
-```
-
 Converted via msconvert or custom implementation
 
 ```{shell}
-cd Documents\Will\mzsql
-conda activate mzsql
+cd Documents\Will
+git clone https://github.com/wkumler/mzsql
+cd mzsql
+
+conda create -n "mzsql_3_11" python=3.11 numpy=1.26.4
+pip install https://pypi.cs.uni-tuebingen.de/packages/pyopenms-3.0.0.dev20230306-cp311-cp311-win_amd64.whl#md5=cdce650718bea07a0193b3227a2c075b
+conda activate mzsql_3_11
+pip install -e .
+pip install git+https://github.com/PNNL-m-q/mzapy.git@no_full_mz_array#egg=mzapy
+
+cd java_things
+curl -O https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.zip
+tar -xf apache-maven-3.9.9-bin.zip
+git clone https://github.com/optimusmoose/MZTree.git
+cd MZTree
+cd msDataServer
+C:\Users\willi\Documents\mzsql\java_things\apache-maven-3.9.9\bin\mvn package
+java -Dsun.java2d.d3d=false -Dsun.java2d.opengl=false -jar target\msDataServer-1.0.jar
+(manually) open mztree file in port 4568
+
+git clone https://github.com/yrm9837/mzMD-java.git
+cd mzMD-java
+C:\Users\willi\Documents\mzsql\java_things\apache-maven-3.9.9\bin\mvn package
+java -Dsun.java2d.d3d=false -Dsun.java2d.opengl=false -jar target\msDataServer-1.0.jar
+(manually) open mzmd file in port 4567
+cd ..
+
+
+
 
 E:
 cd mzsql\MTBLS10066
@@ -80,11 +99,6 @@ for %f in (*.raw) do mza.exe -file %f
 ```
 
 ## Python-based file parsers
-
-```{r}
-git clone https://github.com/wkumler/mzsql
-```
-
 
 Comparisons between different mzML methods
 
@@ -107,7 +121,7 @@ $scan_info
 
 $file_info
 
---
+$sample_metadata
 
 $rt_correction
 
@@ -119,13 +133,62 @@ Via %timeit% (need to redo these with randomization)
 
 # Results
 
-Which file types we were able to find/write parsers for
+## Building parsers
 
+Which file types we were able to find/write parsers for and our notes on their methodology
+
+Good documentation for pyteomics, pyopenms, pymzml, mzmlb (at least via pyteomics)
+Middling documentation for mza/mzapy, mzDB
+Terrible documentation for Aird, MzTree, mzMD, mz5
+Nonexistent documentation for YAFMS, Shaduf
+
+pyopenms requires an old version of Python (3.11) and numpy (1.26.4) because of AVX support - discovered via GitHub issue with no requirements.txt file or environment.yml. Therefore requires using old version of the package.
+
+Aird has zero documentation or application support (Python and C# versions are functionally deprecated)
+
+Toffee only supports TOF data
+
+MzTree and mzMD have no MS2+ support and don't support scan extraction
+Neither of them handle multiple files
+
+mz5 doesn't make it clear how to access the precursor masses for MS2 things so those parsers are missing, ref mzMLb paper here
+
+mzDB handles metadata as XML strings and doesn't support bounding boxes for MS2 things afaics
+Doesn't support .d files (only .raw and .wiff)
+Doesn't handle polarity switching data
+
+MZA can't perform centroiding simultaneously with .raw conversion, requires switch from .mzML
+MZA doesn't support .wiff (only .raw or .d)
+mzapy officially only supports .d (.raw requires installing from a separate development branch)
+mzapy doesn't support direct scan extraction - baffling given how well the file type exposes this
+mzapy doesn't index by MS2 things (only RT/DT)
+
+Several fundamental inefficiencies identified:
+1. Looping over each scan within a file
+2. Looping over each file within a dataset
+3. Decoding mz/int information each time if filtering on these fields
+4. RTs are not accessible outside of looping over each scan for RT subsetting
+5. Scan ids are not accessible outside of looping over each scan for scan extraction
+
+## Timings for a single file
+
+## Timings for a dataset with multiple files (and file sizes?)
+
+## Database optimization 
+1) Indices and ordering
+2) Peak data extraction via joins vs loops vs unified query
 
 
 # Discussion
 
 While the gap between data scientist and mass spectrometrist continues to narrow, current implementations of MS data storage systems almost seem designed to *increase* it. This is accomplished by extremely poor documentation that makes it difficult to do anything beyond the original designer's intent, typically with data structures that are not familiar to the MS expert.
+
+Not a single parser was without flaws - all were either slow, poorly documented, or had highly limited functionality
+
+Querying things by scan number is dumb.
+1) Different indices for pyopenms vs pymzml vs pyteomics
+2) idx = scan_num only works for consecutive scans (no multi-experiment, no polarity switching, no filtering)
+3) Only USEFUL when you're parsing the entire file! Nobody knows what scan number 976 corresponds to, making extraction by number useless
 
 # Conclusion
 

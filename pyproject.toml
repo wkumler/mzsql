@@ -15,8 +15,12 @@ dependencies = [
     "pymzml",
     "h5py",
     "duckdb",
+    "mzapy",
+    "lxml",
     "pyarrow",
-    "mzapy"
+    "mzapy",
+    "time",
+    "timeit"
 ]
 
 [build-system]
