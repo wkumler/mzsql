@@ -60,7 +60,6 @@ function_list = [
     ("mzMLb", "mzmlb", ".mzMLb"),
     ("mzDB", "mzdb", ".raw.mzDB"),
     ("MZA", "mza", ".mza"),
-    ("mzapy", "mzapy", ".mza"),
     ("mz5", "mz5", ".mz5"),
     ("SQLite", "sqlite", ".sqlite"),
     ("DuckDB", "duckdb", ".duckdb"),
@@ -117,3 +116,21 @@ for target_frag in top_fragments:
         time_df.to_csv('data/singlefile_times.csv', mode='a', header=False, index=False)
 
 print("Success!")
+
+file_sizes = {}
+for name, suffix, filetype in function_list:
+    if(name == "mzMD"):
+        file_sizes[suffix] = os.path.getsize("E:/mzsql/MTBLS10066/result.mzMD")
+    elif(name == "MZTree"):
+        file_sizes[suffix] = os.path.getsize("E:/mzsql/MTBLS10066/01-30-2025_10-35-06.mzTree")
+    elif(name == "Parquet"):
+        dirsize = sum(
+            os.path.getsize(os.path.join(root, f)) 
+            for root, _, files in os.walk("E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01_pqds") 
+            for f in files
+        )
+        file_sizes[suffix] = dirsize
+    else:
+        file_sizes[suffix] = os.path.getsize(f"E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01{filetype}")
+
+pd.DataFrame(file_sizes.items(), columns=["method", "file_size"]).to_csv("data/file_sizes.csv", index=False)
