@@ -7,6 +7,13 @@ mzMLb,22123506
 mzDB,108167168
 MZA,54242326
 mz5,27568188
+<<<<<<< Updated upstream
+=======
+SQLite,144912384
+DuckDB,40906752
+Parquet,39542523
+MZTree,16150528
+>>>>>>> Stashed changes
 mzMD,95887360
 SQLite,144912384
 DuckDB,40906752
