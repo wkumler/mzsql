@@ -7,8 +7,8 @@ method_names <- c("pyteomics", "pymzml", "pyopenms", "pyopenms_2DPeak",
 
 all_timings <- read_csv("data/singlefile_times.csv") %>% 
   mutate(method=factor(method, levels=method_names)) %>%
-  mutate(query=factor(query, levels=c("ms1_scan", "chrom", "rtrange",
-                                      "ms2_scan", "premz", "fragmz"),
+  mutate(query=factor(query, levels=c("ms1_spec", "chrom", "rtrange",
+                                      "ms2_spec", "premz", "fragmz"),
                       labels=c("MS1 scan", "Chromatogram", "RT Range",
                                "MS2 scan", "Precursor search",
                                "Fragment search")))
@@ -45,7 +45,7 @@ all_timings %>%
   scale_y_log10() +
   labs(x="File size (MB)", y="Time (seconds)", color="File type", fill="File type") +
   theme_bw()
-ggsave("figures/singlefile_fig.png")
+
 
 
 
@@ -75,4 +75,7 @@ size_barplot <- all_sizes %>%
   theme_bw() +
   theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5), legend.position = "none")
 library(patchwork)
-time_boxplot + size_barplot + plot_layout(widths = c(3, 1))
+time_boxplot + size_barplot + plot_layout(widths = c(3.5, 1))
+
+ggsave("figures/singlefile_fig.png", width = 6.5, height=5)
+
