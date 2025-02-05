@@ -35,13 +35,13 @@ Relational databases also have several distinct advantages over hierarchical or 
 
 SQL databases also allow mass spectrometrists to access the continual improvements and long-term stability produced by the industries who specialize in these. While HDF5 is a common scientific data format, databases are constantly under development by industry titans deeply invested in their maintenance and optimization. Online analytical processing (OLAP) methods are particularly well suited for MS data given their optimization for read speed under the assumption of infrequent transactions, making modern systems such as DuckDB [@Raasveldt2019] or Apache Arrow’s columnar formats highly appealing while preserving the familiar serverless approach.
 
-Our previous work showed how the ragged arrays of MS data can be converted into a tidy database table in memory [@Kumler2022] and we now logically extend that method into proper database storage and access. Here, we test the hypothesis that a “vanilla” implementation of a relational database which exposes the raw m/z and intensity tuples is an intuitive and performant way of storing MS data for exploratory analysis, visualization, and quality control. We compare the time and space required to extract a representative data subset under three conditions (single scan, ion chromatogram, and all scans within a retention time range) and perform these tests on multiple databases as well as mzML and other MS data formats across multiple MS experiments with varying magnitudes for comparison.
+Our previous work showed how the ragged arrays of MS data can be converted into a tidy database table in memory [@Kumler2022] and we now logically extend that method into proper database storage and access. Here, we test the hypothesis that a “vanilla” implementation of a relational database which exposes the raw m/z and intensity tuples is an intuitive and performant way of storing MS data for exploratory analysis, visualization, and quality control. We compare the time and space required to extract a representative data subset under six conditions and perform these tests on multiple databases as well as mzML and other MS data formats.
 
 # Experimental section
 
-We performed a literature search for mass-spectrometry data formats that have been published in the last 15 years and attempted to find or construct parsers for each format in Python, a popular high-level interpreted language. For formats which had multiple parsers available (mzML), we performed intercomparisons between the different parsers and used the best one available for each query type.
+We performed a literature search for mass-spectrometry data formats that have been published in the last 15 years and attempted to find or construct parsers for each format in Python, a popular high-level interpreted language. Each parser was written to perform three common exploratory data analysis operations on full-scan data and three common operations on MS/MS fragmentation data. Full scan queries consisted of 1) single scan extraction by scan number, 2) retention time range extraction of all scans within a specified retention time range, and 3) chromatogram extraction, which collects the ions within a specified parts-per-million (PPM) error of a known mass. These queries generally correspond to the methods used in @Bouyssie2015, which performed similar tests benchmarking the mzDB format against mz5 and an mzML parser. Note that the chromatogram extraction does not extract a precompiled chromatogram of the sort commonly found at the end of mzML files or as a result of SIM/PRM analysis but instead refers to sifting through the raw data for data tuples with an *m/z* value between specified bounds. MS/MS queries involved extracting three relevant subsets, consisting of 1) a single scan extraction by scan number similar to that of the full scan, 2) extraction of all the fragments associated with a precursor *m/z* within a given PPM, and 3) extraction of all fragments with *m/z* values within a given PPM.
 
-Each parser was written to perform three common exploratory data analysis operations on full-scan data and four common operations on MS/MS fragmentation data. Full scan queries consisted of single scan extraction by scan number, retention time range extraction of all scans within a specified retention time range, and chromatogram extraction, which collects the ions within a specified parts-per-million (ppm) error of a known mass. These queries generally correspond to the methods used in @Bouyssie2015, which performed similar tests benchmarking the mzDB format against mz5 and an mzML parser. MS/MS queries involved four relevant queries: a single scan extraction by scan number similar to that of the full scan; extraction of all the fragments associated with a precursor *m/z* within a given ppm; extraction of all fragments with *m/z* values within a given ppm; and finally a neutral loss query computed by subtracting the fragment mass from the precursor mass where the difference between the two fell within a specified ppm window around a given *m/z*.
+We explored the available documentation on PyPI and Github for each mass spectrometry data format and either identified existing functions and packages that would perform the above queries or wrote our own functions if necessary.
 
 ## Mass-spectrometry files
 
@@ -98,13 +98,6 @@ for %f in (*.raw) do "C:\Program Files\ProteoWizard\raw2mzDB_0.9.10_build2017080
 for %f in (*.raw) do mza.exe -file %f
 ```
 
-## Python-based file parsers
-
-Comparisons between different mzML methods
-
-Some details about the parsers I wrote, nuances of which can be looped and which can't
-
-
 ## Database schema
 
 This “vanilla” database deprioritizes the metadata associated with a given file and focuses on performance and simplicity. Thus, this method does not replace the existing vendor-specific or mzML files but instead constructs a parallel data structure and represents our intuition that metadata is rarely the main target of MS analysis and that labs typically preserve the original files anyway.
@@ -133,48 +126,49 @@ Via %timeit% (need to redo these with randomization)
 
 # Results
 
-## Building parsers
+## All existing MS data formats demand a high level of domain knowledge
 
-Which file types we were able to find/write parsers for and our notes on their methodology
+We were able to obtain or write parsers for seven different existing mass spectrometry (MS) data formats: mzML, mzMLb, mz5, mzDB, MZA, MzTree, and mzMD. Multiple Python packages existed for the mzML data format so we used each of the three dominant packages (pyteomics, pyOpenMS, and pymzml) and compared their timing results as well. We failed to produce parsers for the YAFMS and Shaduf file types due to complete deprecation (links to these no longer exist), the toffee file type due to its application solely to time-of-flight (TOF) data-independent acquisition (DIA) data, the Aird file type due to its current deprecation in Python and C#, and the UIMF format due to a complete lack of interface documentation.
 
-Good documentation for pyteomics, pyopenms, pymzml, mzmlb (at least via pyteomics)
-Middling documentation for mza/mzapy, mzDB
-Terrible documentation for Aird, MzTree, mzMD, mz5
-Nonexistent documentation for YAFMS, Shaduf
+### File conversion support varied enormously
 
-pyopenms requires an old version of Python (3.11) and numpy (1.26.4) because of AVX support - discovered via GitHub issue with no requirements.txt file or environment.yml. Therefore requires using old version of the package.
+Conversion from the initial Thermo .raw file type to the open-source .mzML format was seamlessly performed by Proteowizard's `msconvert` library. Similarly, Proteowizard support for the .mz5 and .mzMLb file types made their conversion trivial.
 
-Aird has zero documentation or application support (Python and C# versions are functionally deprecated)
+mzDB and MZA both had reasonably good documentation, both formats notably providing self-contained extensions to `msconvert` for ease of conversion. However, both converters provide limited coverage, with mzDB notably missing support for Waters and Agilent .d files while MZA currently lacks support for AB Sciex .wiff and Bruker .baf files and is only available via binary executable (.exe), restricting its use to Windows platforms. Additionally, both parsers appear to be unable to separate scans from a polarity-switching experiment or support any of the other filters available natively in `msconvert`, as additional arguments passed to the executable throw errors instead of being passed along to the algorithm.
 
-Toffee only supports TOF data
+MZTree and its derivative, mzMD, provided significantly less documentation about the conversion process than the other file types. This documentation consisted solely of the README available in the associated Github repositories and their installation and deployment required rebuilding the Java applet, of which the bare-bones instructions make several assumptions about the user's PATH environmental variable. In the case of mzMD, no documentation for installation and build was provided and this instead needed to be deduced from MZTree. Additionally, we ran into issues with hardware acceleration once the GUI was launched that required extensive debugging. The GUI conversion, however, is straightforward once the app is correctly compiled and launched, albeit requiring a manual entry of a single file at a time with no apparent batch processing available.
 
-MzTree and mzMD have no MS2+ support and don't support scan extraction
-Neither of them handle multiple files
+### Universal lack of support for the six relevant queries
 
-mz5 doesn't make it clear how to access the precursor masses for MS2 things so those parsers are missing, ref mzMLb paper here
+Despite the relative simplicity and relevance of our queries, none of the available mass spectrometry (MS) formats had existing functions or documented examples of all six queries. Unsurprisingly, the mzML file type had the most extensive coverage but documentation and prebuilt functionality was still disappointingly sparse. The pyteomics package provides four "combined examples" that focus on the spectrum visualization and annotation common to proteomics research but provide minimal guidance about chromatogram or retention time range extraction. pyteomics also provides native support for the mzMLb file type and was the only one of the three Python packages to do so, deserving praise for the minimal disruption that mzMLb files placed on existing pipelines if they were to switch from mzML to mzMLb. The pyOpenMS package provides similarly extensive documentation for proteomic and scan-based analysis but again lacks information about subsetting in the retention time direction, though the existence of an undocumented parser (`get2DPeakDataLong`) provides a simple way to do this for MS1 data. Additionally, pyOpenMS required installing an old version of the package (3.0.0), Python itself (3.11) and the numpy package (<2.0) due to more recent builds requiring AVX support which was unavailable on our hardware. pymzml is intentionally a lightweight parser focused exclusively on reading mzML files but does not supply any functions for the queries other than scan extraction by number and the "Spectrum and Chromatogram" documentation module was empty at the time of writing.
 
-mzDB handles metadata as XML strings and doesn't support bounding boxes for MS2 things afaics
-Doesn't support .d files (only .raw and .wiff)
-Doesn't handle polarity switching data
+mz5's documentation was remarkably sparse, especially considering it was one of the earliest mzML formats and is supported by Proteowizard. Crucially, the original paper [@Wilhelm2012] contains links to a website (https://software.steenlab.org/mz5) which currently returns an HTTP error 500. A Python library (pymz5) exists but requires an old version of Python (2.7 or 3.2) and hasn't been updated in 12 years and is predominately a simple fork of h5py [@ref] with three mz5-specific commits on top. Most problematically, we were unable to determine how mz5 stores precursor *m/z* ratios, making the fragment and precursor searches impossible. This was largely due to the variable-length nested compound structures mz5 that are not supported in all APIs, e.g. Java (@Bhamber2020).
 
-MZA can't perform centroiding simultaneously with .raw conversion, requires switch from .mzML
-MZA doesn't support .wiff (only .raw or .d)
-mzapy officially only supports .d (.raw requires installing from a separate development branch)
-mzapy doesn't support direct scan extraction - baffling given how well the file type exposes this
-mzapy doesn't index by MS2 things (only RT/DT)
+mzDB access was hamstrung by several issues, primarily the outdated repository that implies Python and R support via a port from Rust but was unavailable at the time of development, though we are grateful for the responsive developer who notified us that this implementation was not feature-complete. This required that we deduce the SQLite BLOB type compression format from scratch when writing a parser and spend extensive time reading through the documentation to determine how best to link the various tables provided in the mzDB file. Scan metadata in this file type is stored as raw XML strings, producing the worst of both worlds in requiring both SQLite knowledge in their extraction and XML processing to obtain the relevant information. Additionally, its failure to implement the clever bounding box and run slice scheme for MS/MS data negated with our ability to avoid parsing every MS/MS spectrum when performing precursor and fragment searches.
 
-Several fundamental inefficiencies identified:
-1. Looping over each scan within a file
-2. Looping over each file within a dataset
-3. Decoding mz/int information each time if filtering on these fields
-4. RTs are not accessible outside of looping over each scan for RT subsetting
-5. Scan ids are not accessible outside of looping over each scan for scan extraction
+MZA provides a complementary Python package, `mzapy`, for access to MZA files. Here again we ran into several issues with its installation and use stemming largely from the deployed package requiring TOF bins for parsing, though a separate Github branch provides a workaround and the rapid developer response was appreciated. The `mzapy` package provides a clear example of chromatogram extraction as well as a method for retention time range extraction, though there exists no clear function for the extraction of a single spectrum by scan number despite the internal file structure being highly optimized for this purpose. `mzapy` also provides good support for ion mobility extraction but fails to index MS2 information or provide any clear way to extract fragments by *m/z* or precursor.
 
-## Timings for a single file
+MZTree and mzMD provide a slightly strange interface to MS data, requiring a separate Java server to be launched that could then be queried via an API. For users without prior knowledge of HTTP request methods or exposure to programming APIs, the README is entirely unhelpful because it simply documents the API's endpoints and provides no complete query strings as examples to guide the user. This combination of GUI server and command-line HTTP request inverts the typical paradigm of GUI for exploration and command line for construction to unnecessarily complicated results. More problematically for this analysis, the API provides no apparent way to access MS/MS data or query the files by scan number, with only RT and *m/z* bounds controlling the subset of data extracted. Finally, the GUI provides no way to open multiple files simultaneously or iterate through files programmatically and instead requiring point-and-click interaction with the GUI each time a file is opened or closed, preventing us from making reasonable comparisons in tests requiring multiple files.
 
-## Timings for a dataset with multiple files (and file sizes?)
+## SQL-based parsers were simple to write and use
 
-## Database optimization 
+We then used custom code to convert the mzML files into SQLite and DuckDB databases using a simple schema for MS1 and MS2 data. The MS1 table consisted simply of fields for filename, scan index, retention time, *m/z* ratio, and intensity. The MS2 table consisted of the same fields except that the *m/z* column was separated into precursor and fragment *m/z*. Although we did not extend these databases to include the metadata associated with each file and scan, the logical framework could be easily extended in future work and the metadata typically represents a small fraction of the total space within the file, allowing us to make reasonable comparisons about file size between the databases and the metadata-rich other file types. We also converted each file's MS1 and MS2 table into CSV and Parquet representations for comparison using the same field/column schema.
+
+We found that the documentation for SQLite, DuckDB, and Parquet file formats in Python to far exceed the documentation available for any mzML parser. This is unsurprising given that these file formats are used widely outside of MS research and are developed and maintained by dedicated teams. Additionally, the use of a consistent SQL syntax for table creation and insertion meant that the same code could be used to write to both SQLite and DuckDB, as well as any other databases supported in Python. The use of packages such as SQLAlchemy could be used to additionally streamline this process to any additional database by simply swapping in a new database engine.
+
+Querying the MS1 and MS2 tables was also very straightforward. After establishing a connection to the database, the six queries could be asked using nearly human-readable SQL syntax. Requesting the thousandth MS1 scan by number consisted simply of `SELECT * FROM MS1 WHERE id = 1000` passed along to the pandas.read_sql_query function. More complicated queries such as retention time range (`SELECT * FROM MS1 WHERE rt BETWEEN 6 AND 8`) and a precursor mass search (`SELECT * FROM MS2 WHERE premz BETWEEN 118.086 AND 118.087`) were similarly intuitive.
+
+## Time and space requirements for a single DDA file across formats
+
+
+
+
+![](figures/singlefile_fig.png)
+
+## Timings for a dataset with multiple files 
+
+## Database optimization
+
 1) Indices and ordering
 2) Peak data extraction via joins vs loops vs unified query
 
@@ -185,10 +179,25 @@ While the gap between data scientist and mass spectrometrist continues to narrow
 
 Not a single parser was without flaws - all were either slow, poorly documented, or had highly limited functionality
 
+Several fundamental inefficiencies identified:
+1. Looping over each scan within a file
+2. Looping over each file within a dataset
+3. Decoding mz/int information each time if filtering on these fields
+4. RTs are not accessible outside of looping over each scan for RT subsetting
+5. Scan ids are not accessible outside of looping over each scan for scan extraction
+
 Querying things by scan number is dumb.
 1) Different indices for pyopenms vs pymzml vs pyteomics
 2) idx = scan_num only works for consecutive scans (no multi-experiment, no polarity switching, no filtering)
 3) Only USEFUL when you're parsing the entire file! Nobody knows what scan number 976 corresponds to, making extraction by number useless
+
+DuckDB's zonemaps operate similarly to mzDB's bounding boxes
+
+Unlikely that databases replace the original files so this is meant to be an auxiliary data structure alongside the .raw or .mzML files, not a substitute.
+
+Databases place a larger burden on the initial builder/designer and much less on the end user.
+
+Ultimately, the design decision for mass spectrometry data format will likely result from a variety of factors, most crucially 1) initial vendor type, 2) programming language of the developer, 3) types of MS data included (MS1-only vs MS2+, metadata), 4) whether the entire file will be processed or only a subset (subsetting doesn't matter if the whole file is going to be investigated anyway), 
 
 # Conclusion
 
