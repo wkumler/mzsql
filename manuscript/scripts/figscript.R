@@ -15,42 +15,6 @@ all_timings <- read_csv("data/singlefile_times.csv") %>%
 all_sizes <- read_csv("data/file_sizes.csv") %>%
   mutate(method=factor(method, levels=method_names))
 
-all_timings %>%
-  ggplot() +
-  geom_boxplot(aes(x=method, y=time, color=method)) +
-  facet_wrap(~query) +
-  scale_y_log10() +
-  labs(x=NULL, y="Time (seconds)", color=NULL) +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5))
-all_timings %>%
-  left_join(all_sizes) %>%
-  ggplot() +
-  geom_point(aes(x=file_size/1e6, y=time, color=method), size=4, alpha=0.5) +
-  facet_wrap(~query) +
-  scale_x_continuous(limits = c(0, NA)) +
-  scale_y_log10() +
-  labs(x="File size (MB)", y="Time (seconds)", color="File type") +
-  theme_bw()
-
-all_timings %>%
-  group_by(query, method) %>%
-  summarise(avg_time=mean(time), sd_time=sd(time)) %>%
-  left_join(all_sizes) %>%
-  ggplot() +
-  geom_segment(aes(x=file_size/1e6, xend=file_size/1e6, y=avg_time-sd_time*2, yend=avg_time+sd_time*2, color=method), linewidth = 1.2) +
-  geom_point(aes(x=file_size/1e6, y=avg_time, fill=method), size=4, pch=21, color="black") +
-  facet_wrap(~query) +
-  scale_x_continuous(limits = c(0, NA)) +
-  scale_y_log10() +
-  labs(x="File size (MB)", y="Time (seconds)", color="File type", fill="File type") +
-  theme_bw()
-
-
-
-
-
-
 time_boxplot <- all_timings %>%
   ggplot() +
   geom_boxplot(aes(x=method, y=time, color=method)) +
