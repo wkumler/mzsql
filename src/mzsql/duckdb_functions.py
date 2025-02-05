@@ -1,42 +1,63 @@
 
 import numpy as np
 import pandas as pd
+import os
 import duckdb
 import pyteomics.mzml
 from .helpers import pmppm
 
-def turn_mzml_duckdb(file, outfile, ordered=None):
+def turn_mzml_duckdb(files, outfile, ordered=None):
     conn = duckdb.connect(outfile)
     conn.execute("DROP TABLE IF EXISTS MS1")
+    conn.execute("DROP TABLE IF EXISTS MS2")
+    empty_ms1 = pd.DataFrame(columns=["filename", "id", "mz", "int", "rt"]).astype(
+        {"filename": "string", "id": "int64", "mz": "float64", "int": "float64", "rt": "float64"}
+    )
+    conn.execute("CREATE TABLE MS1 AS SELECT * FROM empty_ms1")
+    empty_ms2 = pd.DataFrame(columns=["filename", "id", "premz", "fragmz", "int", "rt"]).astype(
+        {"filename": "string", "id": "int64", "premz": "float64", "fragmz": "float64", "int": "float64", "rt": "float64"}
+    )
+    conn.execute("CREATE TABLE MS2 AS SELECT * FROM empty_ms2")
 
-    MS1_dfs = []
-    MS2_dfs = []
-    for spectrum in pyteomics.mzml.MzML(file):
-        if spectrum['ms level'] == 1:
-            idx = int(spectrum['id'].split("scan=")[-1].split()[0])
-            mz_vals = spectrum['m/z array']
-            int_vals = spectrum['intensity array']
-            rt_val = spectrum['scanList']['scan'][0]['scan start time']
-            df_scan = pd.DataFrame({'id': idx, 'mz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
-            MS1_dfs.append(df_scan)
-        if spectrum["ms level"] == 2:
-            idx = int(spectrum['id'].split("scan=")[-1].split()[0])
-            premz_val = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window target m/z']
-            mz_vals = spectrum['m/z array']
-            int_vals = spectrum['intensity array']
-            rt_val = spectrum['scanList']['scan'][0]['scan start time']
-            df_scan = pd.DataFrame({'id': idx, 'premz': premz_val, 'fragmz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
-            MS2_dfs.append(df_scan)
+    if isinstance(files, str):
+        files = [files]
+    for file in files:
+        if not os.path.exists(file):
+            raise FileNotFoundError(f"Input mzML file '{file}' does not exist.")
+        MS1_dfs = []
+        MS2_dfs = []
+        for spectrum in pyteomics.mzml.MzML(file):
+            if spectrum['ms level'] == 1:
+                idx = int(spectrum['id'].split("scan=")[-1].split()[0])
+                mz_vals = spectrum['m/z array']
+                int_vals = spectrum['intensity array']
+                rt_val = spectrum['scanList']['scan'][0]['scan start time']
+                df_scan = pd.DataFrame({'filename': os.path.basename(file), 'id': idx, 
+                                        'mz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
+                MS1_dfs.append(df_scan)
+            if spectrum["ms level"] == 2:
+                idx = int(spectrum['id'].split("scan=")[-1].split()[0])
+                premz_val = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window target m/z']
+                mz_vals = spectrum['m/z array']
+                int_vals = spectrum['intensity array']
+                rt_val = spectrum['scanList']['scan'][0]['scan start time']
+                df_scan = pd.DataFrame({'filename': os.path.basename(file), 'id': idx, 'premz': premz_val, 
+                                        'fragmz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
+                MS2_dfs.append(df_scan)
+    
+        all_MS1 = pd.concat(MS1_dfs, ignore_index=True)
+        all_MS2 = pd.concat(MS2_dfs, ignore_index=True)
+        conn.execute("INSERT INTO MS1 SELECT * FROM all_MS1")
+        conn.execute("INSERT INTO MS2 SELECT * FROM all_MS2")
 
-    all_MS1 = pd.concat(MS1_dfs, ignore_index=True)
-    all_MS2 = pd.concat(MS2_dfs, ignore_index=True)
     if ordered is not None:
-        all_MS1.sort_values(by=ordered, inplace=True)
-        all_MS2.sort_values(by=ordered, inplace=True)
-
-    conn.execute("CREATE TABLE MS1 AS SELECT * FROM all_MS1")
-    conn.execute("CREATE TABLE MS2 AS SELECT * FROM all_MS2")
-
+        if ordered == "rt":
+            conn.execute(f"CREATE TABLE MS1 AS SELECT * FROM MS1 ORDER BY {ordered}")
+            conn.execute(f"CREATE TABLE MS2 AS SELECT * FROM MS2 ORDER BY {ordered}")
+        if ordered == "mz":
+            conn.execute(f"CREATE TABLE MS1 AS SELECT * FROM MS1 ORDER BY {ordered}")
+        if ordered in ["fragmz", "premz"]:
+            conn.execute(f"CREATE TABLE MS2 AS SELECT * FROM MS2 ORDER BY {ordered}")
     conn.close()
 
     return outfile

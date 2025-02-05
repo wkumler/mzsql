@@ -35,7 +35,7 @@ def turn_mzml_parquet(file, outdir, ordered=None):
     table_MS2 = pa.Table.from_pandas(all_MS2)
 
     basename = os.path.splitext(os.path.basename(file))[0]
-    os.makedirs(outdir)
+    os.makedirs(outdir, exist_ok=True)
     os.makedirs(f"{outdir}/MS1", exist_ok=True)
     os.makedirs(f"{outdir}/MS2", exist_ok=True)
     pq.write_table(table_MS1, f"{outdir}/MS1/{basename}.parquet")
