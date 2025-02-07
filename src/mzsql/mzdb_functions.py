@@ -140,7 +140,7 @@ def get_rtrange_mzdb(file, rtstart, rtend):
     bb_dataframe = pd.read_sql(bb_query, connection, params=(rtstart*60, rtend*60))
     unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
     rtrange_data = pd.concat(unpacked_bb_list).merge(scanid_rt_pd)
-    rtrange_data["rt"] /= 60
+    rtrange_data = rtrange_data[(rtrange_data["rt"] > rtstart*60) & (rtrange_data["rt"] < rtend*60)]
 
     connection.close()
     return(rtrange_data)
