@@ -1,0 +1,207 @@
+import pandas as pd
+import numpy as np
+import timeit
+import pyopenms
+import pyteomics.mzml
+import pymzml
+import h5py
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+def get_randscan_mzml_pyopenms(scan_num):
+    exp = pyopenms.MSExperiment()
+    pyopenms.MzMLFile().load("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", exp)
+    spec_data = exp[scan_num].get_peaks()
+    return(pd.DataFrame({"mz":spec_data[0], "int":spec_data[1]}))
+
+def get_randscan_mzml_pyteomics(scan_num):
+    file_data = pyteomics.mzml.MzML("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML")
+    return(pd.DataFrame({"mz":file_data[scan_num]['m/z array'], "int":file_data[scan_num]['intensity array']}))
+
+def get_randscan_mzml_pymzml(scan_num):
+    run = pymzml.run.Reader("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", build_index_from_scratch=True)
+    spec1_data = run[scan_num].peaks("raw")
+    return(pd.DataFrame({"mz":spec1_data[:,0], "int":spec1_data[:,1]}))
+
+def get_randscan_mza(scan_num):
+    mza = h5py.File("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mza", 'r')
+    intensities = mza["Arrays_intensity/"+str(scan_num)][:]
+    mz = mza["Arrays_mz/"+str(scan_num)][:]
+    mza.close()
+    spec_df = pd.DataFrame({"mz":mz, "int":intensities})
+    return(spec_df)
+
+def get_randscan_mz5(scan_num):
+    mz5_file = h5py.File("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mz5", 'r')
+    scan_idxs = np.concatenate(([0], mz5_file["SpectrumIndex"][...]))
+    lower_bound = scan_idxs[scan_num-1]
+    upper_bound = scan_idxs[scan_num]
+    mz_vals = np.cumsum(mz5_file["SpectrumMZ"][lower_bound:upper_bound])
+    int_vals = mz5_file["SpectrumIntensity"][lower_bound:upper_bound]
+    return(pd.DataFrame({"mz":mz_vals, "int":int_vals}))
+
+
+
+def min_randscan_mzml_pyopenms(scan_num):
+    spec_data = pyop_exp[scan_num].get_peaks()
+    return(pd.DataFrame({"mz":spec_data[0], "int":spec_data[1]}))
+
+def min_randscan_mzml_pyteomics(scan_num):
+    return(pd.DataFrame({"mz":pyteo_data[scan_num]['m/z array'], "int":pyteo_data[scan_num]['intensity array']}))
+
+def min_randscan_mzml_pymzml(scan_num):
+    spec1_data = pymzml_run[scan_num].peaks("raw")
+    return(pd.DataFrame({"mz":spec1_data[:,0], "int":spec1_data[:,1]}))
+
+def min_randscan_mza(scan_num):
+    intensities = mza_file["Arrays_intensity/"+str(scan_num)][:]
+    mz = mza_file["Arrays_mz/"+str(scan_num)][:]
+    mza.close()
+    spec_df = pd.DataFrame({"mz":mz, "int":intensities})
+    return(spec_df)
+
+def min_randscan_mz5(scan_num):
+    scan_idxs = np.concatenate(([0], mz5_file["SpectrumIndex"][...]))
+    lower_bound = scan_idxs[scan_num-1]
+    upper_bound = scan_idxs[scan_num]
+    mz_vals = np.cumsum(mz5_file["SpectrumMZ"][lower_bound:upper_bound])
+    int_vals = mz5_file["SpectrumIntensity"][lower_bound:upper_bound]
+    return(pd.DataFrame({"mz":mz_vals, "int":int_vals}))
+
+all_timings = []
+for scan_num in range(3, 12, 2):
+    print(scan_num)
+    pyteo=timeit.repeat(f"get_randscan_mzml_pyteomics({scan_num})", globals=globals(), number=1, repeat=3)
+    pyopen=timeit.repeat(f'get_randscan_mzml_pyopenms({scan_num})', globals=globals(), number=1, repeat=3)
+    pymzml_data=timeit.repeat(f'get_randscan_mzml_pymzml({scan_num})', globals=globals(), number=1, repeat=3)
+    mza=timeit.repeat(f'get_randscan_mza({scan_num})', globals=globals(), number=1, repeat=3)
+    mz5=timeit.repeat(f'get_randscan_mz5({scan_num})', globals=globals(), number=1, repeat=3)
+    time_info = pd.DataFrame({"id":scan_num, "pyteo": pyteo, "pyopen": pyopen, "pymzml": pymzml_data, 
+                              "mza": mza, "mz5": mz5, "function": "inclusive"})
+    all_timings.append(time_info)
+
+for scan_num in range(3, 12, 2):
+    print(scan_num)
+    pyop_exp = pyopenms.MSExperiment()
+    pyopenms.MzMLFile().load("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", pyop_exp)
+    pyopen=timeit.repeat(f'min_randscan_mzml_pyopenms({scan_num})', globals=globals(), number=1, repeat=3)
+
+    pyteo_data = pyteomics.mzml.MzML("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML")
+    pyteo=timeit.repeat(f"get_randscan_mzml_pyteomics({scan_num})", globals=globals(), number=1, repeat=3)
+
+    pymzml_run = pymzml.run.Reader("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", build_index_from_scratch=True)
+    pymzml_data=timeit.repeat(f'get_randscan_mzml_pymzml({scan_num})', globals=globals(), number=1, repeat=3)
+
+    mza_file = h5py.File("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mza", 'r')
+    mza=timeit.repeat(f'get_randscan_mza({scan_num})', globals=globals(), number=1, repeat=3)
+
+    mz5_file = h5py.File("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mz5", 'r')
+    mz5=timeit.repeat(f'get_randscan_mz5({scan_num})', globals=globals(), number=1, repeat=3)
+
+    time_info = pd.DataFrame({"id":scan_num, "pyteo": pyteo, "pyopen": pyopen, "pymzml": pymzml_data, 
+                              "mza": mza, "mz5": mz5, "function": "minimal"})
+    all_timings.append(time_info)
+
+
+pd.concat(all_timings).to_csv("data/singlefile_supp.csv", index=False)
+
+
+# Rerun timings for pyopenms using the precompiled methods
+def get_chrom_pyop_precomp(mz, ppm):
+    mzmin, mzmax = pmppm(mz, ppm)
+    scan_dfs = []
+    for spectrum in exp:
+        if(spectrum.getMSLevel()==1):
+            rt_val = spectrum.getRT()
+            mz_vals, int_vals = spectrum.get_peaks()
+            bet_idxs = (mzmin < mz_vals) & (mz_vals < mzmax)
+            if(sum(bet_idxs)>0):
+                df_scan = pd.DataFrame({'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
+                scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
+    
+def get_chrom_pyop_precomp_2DPeak(mz, ppm):
+    mzmin, mzmax = pmppm(mz, ppm)
+    chrom_data=exp.get2DPeakDataLong(min_mz=mzmin, max_mz=mzmax, min_rt=exp.getMinRT(), max_rt=exp.getMaxRT())
+    return(pd.DataFrame({"rt":chrom_data[0], "mz":chrom_data[1], "int":chrom_data[2]}))
+    
+def get_spec_pyop_precomp(scan_num):
+    i = 0
+    while i <= exp.size():
+        if(int(exp[i].getNativeID().split("scan=")[-1].split()[0]) == scan_num):
+            spec_data = exp[i].get_peaks()
+            return(pd.DataFrame({"mz":spec_data[0], "int":spec_data[1]}))
+        else:
+            i += 1
+    raise Exception(f"No scan number {scan_num} found")
+
+def get_rtrange_pyop_precomp(rtstart, rtend):
+    scan_dfs = []
+    for spectrum in exp:
+        if(spectrum.getMSLevel()==1):
+            rt_val = spectrum.getRT()
+            if(rtstart*60 < rt_val < rtend*60):
+                mz_vals, int_vals = spectrum.get_peaks()
+                df_scan = pd.DataFrame({'mz':mz_vals, 'int':int_vals, 'rt':[rt_val]*len(int_vals)})
+                scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
+    
+def get_rtrange_pyop_precomp_2DPeak(rtstart, rtend):
+    rtrange_data=exp.get2DPeakDataLong(min_mz=exp.getMinMZ(), max_mz=exp.getMaxMZ(), min_rt=rtstart*60, max_rt=rtend*60)
+    return(pd.DataFrame({"rt":rtrange_data[0], "mz":rtrange_data[1], "int":rtrange_data[2]}))
+
+def get_MS2premz_pyop_precomp(precursor_mz, ppm_acc):
+    mzmin, mzmax = pmppm(precursor_mz, ppm_acc)
+    scan_dfs = []
+    for spectrum in exp:
+        if(spectrum.getMSLevel()==2):
+            premz_val = spectrum.getPrecursors()[0].getMZ()
+            if(mzmin < premz_val < mzmax):
+                rt_val = spectrum.getRT()/60
+                spec_data = spectrum.get_peaks()
+                df_scan = pd.DataFrame({"rt":rt_val, "premz":premz_val, "fragmz":spec_data[0], "int":spec_data[1]})
+                scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
+
+def get_MS2fragmz_pyop_precomp(fragment_mz, ppm_acc):
+    mzmin, mzmax = pmppm(fragment_mz, ppm_acc)
+    scan_dfs = []
+    for spectrum in exp:
+        if(spectrum.getMSLevel()==2):
+            premz_val = spectrum.getPrecursors()[0].getMZ()
+            rt_val = spectrum.getRT()
+            mz_vals, int_vals = spectrum.get_peaks()
+            bet_idxs = (mzmin < mz_vals) & (mz_vals < mzmax)
+            if(sum(bet_idxs)>0):
+                df_scan = pd.DataFrame({"rt":rt_val, "premz":premz_val, "fragmz":mz_vals[bet_idxs], "int":int_vals[bet_idxs]})
+                scan_dfs.append(df_scan)
+    return(pd.concat(scan_dfs, ignore_index=True))
+
+precomp_timings = [
+    timeit.repeat(f"get_spec_pyop_precomp(1)", globals=globals(), number=1, repeat=3),
+    timeit.repeat(f"get_chrom_pyop_precomp(829.79730224, 5)", globals=globals(), number=1, repeat=3),
+    timeit.repeat(f"get_chrom_pyop_precomp_2DPeak(829.79730224, 5)", globals=globals(), number=1, repeat=3),
+    timeit.repeat(f"get_rtrange_pyop_precomp(11, 12)", globals=globals(), number=1, repeat=3),
+    timeit.repeat(f"get_rtrange_pyop_precomp_2DPeak(11, 12)", globals=globals(), number=1, repeat=3),
+    timeit.repeat(f"get_MS2premz_pyop_precomp(752.60633, 5)", globals=globals(), number=1, repeat=3),
+    timeit.repeat(f"get_MS2fragmz_pyop_precomp(184.07304, 5)", globals=globals(), number=1, repeat=3)
+]
+
+init_timings = [
+    timeit.repeat(f"get_spec_mzml_pyopenms('E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML', 1)", globals=globals(), number=1, repeat=3),
+    timeit.repeat(f"get_chrom_mzml_pyopenms('E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML', 829.79730224, 5)", globals=globals(), number=1, repeat=3),
+    timeit.repeat(f"get_chrom_mzml_pyopenms_2DPeak('E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML', 829.79730224, 5)", globals=globals(), number=1, repeat=3),
+    timeit.repeat(f"get_rtrange_mzml_pyopenms('E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML', 11, 12)", globals=globals(), number=1, repeat=3),
+    timeit.repeat(f"get_rtrange_mzml_pyopenms_2DPeak('E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML', 11, 12)", globals=globals(), number=1, repeat=3),
+    timeit.repeat(f"get_MS2premz_mzml_pyopenms('E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML', 752.60633, 5)", globals=globals(), number=1, repeat=3),
+    timeit.repeat(f"get_MS2fragmz_mzml_pyopenms('E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML', 184.07304, 5)", globals=globals(), number=1, repeat=3)
+]
+
+init_times = pd.DataFrame(init_timings, columns=["rep1", "rep2", "rep3"])
+init_times["method"]=["spec", "chrom", "chrom_2D", "rtrange", "rtrange_2D", "premz", "fragmz"]
+init_times["type"] = "init"
+precomp_times = pd.DataFrame(precomp_timings, columns=["rep1", "rep2", "rep3"])
+precomp_times["method"]=["spec", "chrom", "chrom_2D", "rtrange", "rtrange_2D", "premz", "fragmz"]
+precomp_times["type"] = "precomp"
+
+pd.concat([init_times, precomp_times]).to_csv("data/pyopenms_precomp.csv", index=False)
