@@ -28,9 +28,11 @@ def get_chrom_mz5(file, mz, ppm):
 
 def get_spec_mz5(file, scan_num):
     mz5_file = h5py.File(file, 'r')
+    mz5_meta = mz5_file["SpectrumMetaData"]["id", "index"]
+    idx = np.where(np.char.find(mz5_meta['id'].astype(str), f'scan={scan_num}') != -1)[0][0]
     scan_idxs = np.concatenate(([0], mz5_file["SpectrumIndex"][...]))
-    lower_bound = scan_idxs[scan_num-1]
-    upper_bound = scan_idxs[scan_num]
+    lower_bound = scan_idxs[idx-1]
+    upper_bound = scan_idxs[idx]
     mz_vals = np.cumsum(mz5_file["SpectrumMZ"][lower_bound:upper_bound])
     int_vals = mz5_file["SpectrumIntensity"][lower_bound:upper_bound]
     return(pd.DataFrame({"mz":mz_vals, "int":int_vals}))
