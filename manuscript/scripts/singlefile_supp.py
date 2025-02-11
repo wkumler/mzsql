@@ -7,6 +7,7 @@ import pymzml
 import h5py
 import seaborn as sns
 import matplotlib.pyplot as plt
+from mzsql import *
 
 def get_randscan_mzml_pyopenms(scan_num):
     exp = pyopenms.MSExperiment()
@@ -56,7 +57,6 @@ def min_randscan_mzml_pymzml(scan_num):
 def min_randscan_mza(scan_num):
     intensities = mza_file["Arrays_intensity/"+str(scan_num)][:]
     mz = mza_file["Arrays_mz/"+str(scan_num)][:]
-    mza.close()
     spec_df = pd.DataFrame({"mz":mz, "int":intensities})
     return(spec_df)
 
@@ -76,8 +76,8 @@ for scan_num in range(3, 12, 2):
     pymzml_data=timeit.repeat(f'get_randscan_mzml_pymzml({scan_num})', globals=globals(), number=1, repeat=3)
     mza=timeit.repeat(f'get_randscan_mza({scan_num})', globals=globals(), number=1, repeat=3)
     mz5=timeit.repeat(f'get_randscan_mz5({scan_num})', globals=globals(), number=1, repeat=3)
-    time_info = pd.DataFrame({"id":scan_num, "pyteo": pyteo, "pyopen": pyopen, "pymzml": pymzml_data, 
-                              "mza": mza, "mz5": mz5, "function": "inclusive"})
+    time_info = pd.DataFrame({"id":scan_num, "pyteomics": pyteo, "pyopenms": pyopen, "pymzml": pymzml_data, 
+                              "MZA": mza, "mz5": mz5, "fun_type": "inclusive"})
     all_timings.append(time_info)
 
 for scan_num in range(3, 12, 2):
@@ -87,19 +87,19 @@ for scan_num in range(3, 12, 2):
     pyopen=timeit.repeat(f'min_randscan_mzml_pyopenms({scan_num})', globals=globals(), number=1, repeat=3)
 
     pyteo_data = pyteomics.mzml.MzML("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML")
-    pyteo=timeit.repeat(f"get_randscan_mzml_pyteomics({scan_num})", globals=globals(), number=1, repeat=3)
+    pyteo=timeit.repeat(f"min_randscan_mzml_pyteomics({scan_num})", globals=globals(), number=1, repeat=3)
 
     pymzml_run = pymzml.run.Reader("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", build_index_from_scratch=True)
-    pymzml_data=timeit.repeat(f'get_randscan_mzml_pymzml({scan_num})', globals=globals(), number=1, repeat=3)
+    pymzml_data=timeit.repeat(f'min_randscan_mzml_pymzml({scan_num})', globals=globals(), number=1, repeat=3)
 
     mza_file = h5py.File("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mza", 'r')
-    mza=timeit.repeat(f'get_randscan_mza({scan_num})', globals=globals(), number=1, repeat=3)
+    mza=timeit.repeat(f'min_randscan_mza({scan_num})', globals=globals(), number=1, repeat=3)
 
     mz5_file = h5py.File("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mz5", 'r')
-    mz5=timeit.repeat(f'get_randscan_mz5({scan_num})', globals=globals(), number=1, repeat=3)
+    mz5=timeit.repeat(f'min_randscan_mz5({scan_num})', globals=globals(), number=1, repeat=3)
 
-    time_info = pd.DataFrame({"id":scan_num, "pyteo": pyteo, "pyopen": pyopen, "pymzml": pymzml_data, 
-                              "mza": mza, "mz5": mz5, "function": "minimal"})
+    time_info = pd.DataFrame({"id":scan_num, "pyteomics": pyteo, "pyopenms": pyopen, "pymzml": pymzml_data, 
+                              "MZA": mza, "mz5": mz5, "fun_type": "minimal"})
     all_timings.append(time_info)
 
 
@@ -107,10 +107,13 @@ pd.concat(all_timings).to_csv("data/singlefile_supp.csv", index=False)
 
 
 # Rerun timings for pyopenms using the precompiled methods
+pyop_exp = pyopenms.MSExperiment()
+pyopenms.MzMLFile().load("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", pyop_exp)
+
 def get_chrom_pyop_precomp(mz, ppm):
     mzmin, mzmax = pmppm(mz, ppm)
     scan_dfs = []
-    for spectrum in exp:
+    for spectrum in pyop_exp:
         if(spectrum.getMSLevel()==1):
             rt_val = spectrum.getRT()
             mz_vals, int_vals = spectrum.get_peaks()
@@ -122,14 +125,14 @@ def get_chrom_pyop_precomp(mz, ppm):
     
 def get_chrom_pyop_precomp_2DPeak(mz, ppm):
     mzmin, mzmax = pmppm(mz, ppm)
-    chrom_data=exp.get2DPeakDataLong(min_mz=mzmin, max_mz=mzmax, min_rt=exp.getMinRT(), max_rt=exp.getMaxRT())
+    chrom_data=pyop_exp.get2DPeakDataLong(min_mz=mzmin, max_mz=mzmax, min_rt=0, max_rt=1e7)
     return(pd.DataFrame({"rt":chrom_data[0], "mz":chrom_data[1], "int":chrom_data[2]}))
     
 def get_spec_pyop_precomp(scan_num):
     i = 0
-    while i <= exp.size():
-        if(int(exp[i].getNativeID().split("scan=")[-1].split()[0]) == scan_num):
-            spec_data = exp[i].get_peaks()
+    while i <= pyop_exp.size():
+        if(int(pyop_exp[i].getNativeID().split("scan=")[-1].split()[0]) == scan_num):
+            spec_data = pyop_exp[i].get_peaks()
             return(pd.DataFrame({"mz":spec_data[0], "int":spec_data[1]}))
         else:
             i += 1
@@ -137,7 +140,7 @@ def get_spec_pyop_precomp(scan_num):
 
 def get_rtrange_pyop_precomp(rtstart, rtend):
     scan_dfs = []
-    for spectrum in exp:
+    for spectrum in pyop_exp:
         if(spectrum.getMSLevel()==1):
             rt_val = spectrum.getRT()
             if(rtstart*60 < rt_val < rtend*60):
@@ -147,13 +150,13 @@ def get_rtrange_pyop_precomp(rtstart, rtend):
     return(pd.concat(scan_dfs, ignore_index=True))
     
 def get_rtrange_pyop_precomp_2DPeak(rtstart, rtend):
-    rtrange_data=exp.get2DPeakDataLong(min_mz=exp.getMinMZ(), max_mz=exp.getMaxMZ(), min_rt=rtstart*60, max_rt=rtend*60)
+    rtrange_data=pyop_exp.get2DPeakDataLong(min_mz=0, max_mz=1e6, min_rt=rtstart*60, max_rt=rtend*60)
     return(pd.DataFrame({"rt":rtrange_data[0], "mz":rtrange_data[1], "int":rtrange_data[2]}))
 
 def get_MS2premz_pyop_precomp(precursor_mz, ppm_acc):
     mzmin, mzmax = pmppm(precursor_mz, ppm_acc)
     scan_dfs = []
-    for spectrum in exp:
+    for spectrum in pyop_exp:
         if(spectrum.getMSLevel()==2):
             premz_val = spectrum.getPrecursors()[0].getMZ()
             if(mzmin < premz_val < mzmax):
@@ -166,7 +169,7 @@ def get_MS2premz_pyop_precomp(precursor_mz, ppm_acc):
 def get_MS2fragmz_pyop_precomp(fragment_mz, ppm_acc):
     mzmin, mzmax = pmppm(fragment_mz, ppm_acc)
     scan_dfs = []
-    for spectrum in exp:
+    for spectrum in pyop_exp:
         if(spectrum.getMSLevel()==2):
             premz_val = spectrum.getPrecursors()[0].getMZ()
             rt_val = spectrum.getRT()
@@ -176,6 +179,8 @@ def get_MS2fragmz_pyop_precomp(fragment_mz, ppm_acc):
                 df_scan = pd.DataFrame({"rt":rt_val, "premz":premz_val, "fragmz":mz_vals[bet_idxs], "int":int_vals[bet_idxs]})
                 scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
+
+
 
 precomp_timings = [
     timeit.repeat(f"get_spec_pyop_precomp(1)", globals=globals(), number=1, repeat=3),
