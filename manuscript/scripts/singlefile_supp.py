@@ -3,6 +3,7 @@ import numpy as np
 import timeit
 import pyopenms
 import pyteomics.mzml
+import pyteomics.mzmlb
 import pymzml
 import h5py
 import seaborn as sns
@@ -23,6 +24,10 @@ def get_randscan_mzml_pymzml(scan_num):
     run = pymzml.run.Reader("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", build_index_from_scratch=True)
     spec1_data = run[scan_num].peaks("raw")
     return(pd.DataFrame({"mz":spec1_data[:,0], "int":spec1_data[:,1]}))
+
+def get_randscan_mzmlb(scan_num):
+    file_data = pyteomics.mzmlb.MzMLb("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzMLb")
+    return(pd.DataFrame({"mz":file_data[scan_num]['m/z array'], "int":file_data[scan_num]['intensity array']}))
 
 def get_randscan_mza(scan_num):
     mza = h5py.File("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mza", 'r')
@@ -54,6 +59,9 @@ def min_randscan_mzml_pymzml(scan_num):
     spec1_data = pymzml_run[scan_num].peaks("raw")
     return(pd.DataFrame({"mz":spec1_data[:,0], "int":spec1_data[:,1]}))
 
+def min_randscan_mzmlb(scan_num):
+    return(pd.DataFrame({"mz":mzmlb_data[scan_num]['m/z array'], "int":mzmlb_data[scan_num]['intensity array']}))
+
 def min_randscan_mza(scan_num):
     intensities = mza_file["Arrays_intensity/"+str(scan_num)][:]
     mz = mza_file["Arrays_mz/"+str(scan_num)][:]
@@ -74,10 +82,11 @@ for scan_num in range(3, 12, 2):
     pyteo=timeit.repeat(f"get_randscan_mzml_pyteomics({scan_num})", globals=globals(), number=1, repeat=3)
     pyopen=timeit.repeat(f'get_randscan_mzml_pyopenms({scan_num})', globals=globals(), number=1, repeat=3)
     pymzml_data=timeit.repeat(f'get_randscan_mzml_pymzml({scan_num})', globals=globals(), number=1, repeat=3)
+    mzmlb=timeit.repeat(f"get_randscan_mzmlb({scan_num})", globals=globals(), number=1, repeat=3)
     mza=timeit.repeat(f'get_randscan_mza({scan_num})', globals=globals(), number=1, repeat=3)
     mz5=timeit.repeat(f'get_randscan_mz5({scan_num})', globals=globals(), number=1, repeat=3)
     time_info = pd.DataFrame({"id":scan_num, "pyteomics": pyteo, "pyopenms": pyopen, "pymzml": pymzml_data, 
-                              "MZA": mza, "mz5": mz5, "fun_type": "inclusive"})
+                              "mzMLb":mzmlb, "MZA": mza, "mz5": mz5, "fun_type": "inclusive"})
     all_timings.append(time_info)
 
 for scan_num in range(3, 12, 2):
@@ -92,6 +101,9 @@ for scan_num in range(3, 12, 2):
     pymzml_run = pymzml.run.Reader("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", build_index_from_scratch=True)
     pymzml_data=timeit.repeat(f'min_randscan_mzml_pymzml({scan_num})', globals=globals(), number=1, repeat=3)
 
+    mzmlb_data = pyteomics.mzmlb.MzMLb("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzMLb")
+    mzmlb=timeit.repeat(f"min_randscan_mzmlb({scan_num})", globals=globals(), number=1, repeat=3)
+    
     mza_file = h5py.File("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mza", 'r')
     mza=timeit.repeat(f'min_randscan_mza({scan_num})', globals=globals(), number=1, repeat=3)
 
@@ -99,7 +111,7 @@ for scan_num in range(3, 12, 2):
     mz5=timeit.repeat(f'min_randscan_mz5({scan_num})', globals=globals(), number=1, repeat=3)
 
     time_info = pd.DataFrame({"id":scan_num, "pyteomics": pyteo, "pyopenms": pyopen, "pymzml": pymzml_data, 
-                              "MZA": mza, "mz5": mz5, "fun_type": "minimal"})
+                              "mzMLb":mzmlb, "MZA": mza, "mz5": mz5, "fun_type": "minimal"})
     all_timings.append(time_info)
 
 
