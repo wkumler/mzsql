@@ -112,7 +112,7 @@ def get_MS2nloss_mzml_pyteomics(mzml_file, neutral_loss, ppm):
 
 
 # pyopenms things
-def get_chrom_mzml_pyopenms(files, mz, ppm):
+def get_chrom_mzml_pyopenms(file, mz, ppm):
     """
     Retrieves chromatogram data from a mzML file using pyopenms for a specific m/z range.
 
@@ -126,10 +126,7 @@ def get_chrom_mzml_pyopenms(files, mz, ppm):
                       within the specified m/z range.
     """
     exp = pyopenms.MSExperiment()
-    if isinstance(files, str):
-        files = [files]
-    for file in files:
-        pyopenms.MzMLFile().load(file, exp)
+    pyopenms.MzMLFile().load(file, exp)
     mzmin, mzmax = pmppm(mz, ppm)
     scan_dfs = []
     for spectrum in exp:
@@ -142,7 +139,7 @@ def get_chrom_mzml_pyopenms(files, mz, ppm):
                 scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
     
-def get_chrom_mzml_pyopenms_2DPeak(files, mz, ppm):
+def get_chrom_mzml_pyopenms_2DPeak(file, mz, ppm):
     """
     Retrieves 2D chromatogram data from a mzML file using pyopenms for a specific m/z range.
 
@@ -156,22 +153,15 @@ def get_chrom_mzml_pyopenms_2DPeak(files, mz, ppm):
                       within the specified m/z range in a 2D peak format.
     """
     exp = pyopenms.MSExperiment()
-    if isinstance(files, str):
-        files = [files]
-    for file in files:
-        pyopenms.MzMLFile().load(file, exp)
+    pyopenms.MzMLFile().load(file, exp)
     exp.updateRanges()
     mzmin, mzmax = pmppm(mz, ppm)
     chrom_data=exp.get2DPeakDataLong(min_mz=mzmin, max_mz=mzmax, min_rt=exp.getMinRT(), max_rt=exp.getMaxRT())
     return(pd.DataFrame({"rt":chrom_data[0], "mz":chrom_data[1], "int":chrom_data[2]}))
     
-def get_spec_mzml_pyopenms(files, scan_num):
+def get_spec_mzml_pyopenms(file, scan_num):
     exp = pyopenms.MSExperiment()
-    if isinstance(files, str):
-        files = [files]
-    for file in files:
-        pyopenms.MzMLFile().load(file, exp)
-    i = 0
+    pyopenms.MzMLFile().load(file, exp)
     while i <= exp.size():
         if(int(exp[i].getNativeID().split("scan=")[-1].split()[0]) == scan_num):
             spec_data = exp[i].get_peaks()
@@ -179,8 +169,8 @@ def get_spec_mzml_pyopenms(files, scan_num):
         else:
             i += 1
     raise Exception(f"No scan number {scan_num} found")
-    
-def get_rtrange_mzml_pyopenms(files, rtstart, rtend):
+
+def get_rtrange_mzml_pyopenms(file, rtstart, rtend):
     """
     Retrieves chromatogram data for a specific retention time range from a mzML file using pyopenms.
 
@@ -194,10 +184,7 @@ def get_rtrange_mzml_pyopenms(files, rtstart, rtend):
                       within the specified retention time range.
     """
     exp = pyopenms.MSExperiment()
-    if isinstance(files, str):
-        files = [files]
-    for file in files:
-        pyopenms.MzMLFile().load(file, exp)
+    pyopenms.MzMLFile().load(file, exp)
     exp.updateRanges()
     scan_dfs = []
     for spectrum in exp:
@@ -209,7 +196,7 @@ def get_rtrange_mzml_pyopenms(files, rtstart, rtend):
                 scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
     
-def get_rtrange_mzml_pyopenms_2DPeak(files, rtstart, rtend):
+def get_rtrange_mzml_pyopenms_2DPeak(file, rtstart, rtend):
     """
     Retrieves 2D chromatogram data from a mzML file using pyopenms for a specific retention time range.
 
@@ -223,20 +210,14 @@ def get_rtrange_mzml_pyopenms_2DPeak(files, rtstart, rtend):
                       within the specified retention time range in a 2D peak format.
     """
     exp = pyopenms.MSExperiment()
-    if isinstance(files, str):
-        files = [files]
-    for file in files:
-        pyopenms.MzMLFile().load(file, exp)
+    pyopenms.MzMLFile().load(file, exp)
     exp.updateRanges()
     rtrange_data=exp.get2DPeakDataLong(min_mz=exp.getMinMZ(), max_mz=exp.getMaxMZ(), min_rt=rtstart*60, max_rt=rtend*60)
     return(pd.DataFrame({"rt":rtrange_data[0], "mz":rtrange_data[1], "int":rtrange_data[2]}))
 
-def get_MS2premz_mzml_pyopenms(files, precursor_mz, ppm_acc):
+def get_MS2premz_mzml_pyopenms(file, precursor_mz, ppm_acc):
     exp = pyopenms.MSExperiment()
-    if isinstance(files, str):
-        files = [files]
-    for file in files:
-        pyopenms.MzMLFile().load(file, exp)
+    pyopenms.MzMLFile().load(file, exp)
     mzmin, mzmax = pmppm(precursor_mz, ppm_acc)
     scan_dfs = []
     for spectrum in exp:
@@ -249,12 +230,9 @@ def get_MS2premz_mzml_pyopenms(files, precursor_mz, ppm_acc):
                 scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
 
-def get_MS2fragmz_mzml_pyopenms(files, fragment_mz, ppm_acc):
+def get_MS2fragmz_mzml_pyopenms(file, fragment_mz, ppm_acc):
     exp = pyopenms.MSExperiment()
-    if isinstance(files, str):
-        files = [files]
-    for file in files:
-        pyopenms.MzMLFile().load(file, exp)
+    pyopenms.MzMLFile().load(file, exp)
     mzmin, mzmax = pmppm(fragment_mz, ppm_acc)
     scan_dfs = []
     for spectrum in exp:
@@ -268,12 +246,9 @@ def get_MS2fragmz_mzml_pyopenms(files, fragment_mz, ppm_acc):
                 scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
     
-def get_MS2nloss_mzml_pyopenms(files, neutral_loss, ppm_acc):
+def get_MS2nloss_mzml_pyopenms(file, neutral_loss, ppm_acc):
     exp = pyopenms.MSExperiment()
-    if isinstance(files, str):
-        files = [files]
-    for file in files:
-        pyopenms.MzMLFile().load(file, exp)
+    pyopenms.MzMLFile().load(file, exp)
     mzmin, mzmax = pmppm(neutral_loss, ppm_acc)
     scan_dfs = []
     for spectrum in exp:
