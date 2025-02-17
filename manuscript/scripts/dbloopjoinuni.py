@@ -17,23 +17,16 @@ if(not(os.path.exists("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.sqlite"))):
     turn_mzml_sqlite(msfiles[0], "E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.sqlite")
     turn_mzml_parquet(msfiles[0], "E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.parquet")
 
-conn = sqlite3.connect("E:/mzsql/MTBLS10066/multifile.sqlite")
-
-top_int_df = pd.read_sql_query("SELECT * FROM MS1 ORDER BY int DESC LIMIT 50000", conn)
+conn = sqlite3.connect("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.sqlite")
+top_int_df = pd.read_sql_query("SELECT * FROM MS1 ORDER BY int DESC LIMIT 30000", conn)
 top_masses = []
 top_rts = []
-for i in range(10):
-    print(i)
+for i in range(100):
     top_rts.append(top_int_df["rt"].iloc[0])
     top_mz = top_int_df["mz"].iloc[0]
     top_masses.append(top_mz)
     mzmin, mzmax = pmppm(top_mz, 10)
-    rtmin, rtmax = top_int_df["rt"].iloc[0]+(-0.5, 0.5)
-    top_int_df = top_int_df[((top_int_df["mz"]<mzmin) | (top_int_df["mz"]>mzmax)) & ((top_int_df["rt"]<rtmin) | (top_int_df["rt"]>rtmax))]
-
-print(top_masses)
-
-
+    top_int_df = top_int_df[((top_int_df["mz"]<mzmin) | (top_int_df["mz"]>mzmax))]
 
 def get_multichrom_duckdb_loop(file, mzs, ppm):
     conn = duckdb.connect(file)
@@ -161,10 +154,13 @@ function_list = [
 init_df = pd.DataFrame(columns=["method", "time"])
 init_df.to_csv('data/dbloopjoinuni_times.csv', index=False)
 
-for fun_i, file_ending in function_list:
-    print(fun_i)
-    rep_function = f"{fun_i}('E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04{file_ending}', {top_masses}, 5)"
-    time_vals = timeit.repeat(rep_function, globals=globals(), number=1, repeat=3)
-    fun_name = fun_i.replace("get_multichrom_", "")
-    time_df = pd.DataFrame({"method":fun_name, "time":time_vals})
-    time_df.to_csv('data/dbloopjoinuni_times.csv', mode='a', header=False, index=False)
+random.seed(123)
+for n_chroms in [1, 3, 10, 30, 100]:
+    print(n_chroms)
+    mz_list = random.sample(top_masses, n_chroms)
+    for fun_i, file_ending in function_list:
+        rep_function = f"{fun_i}('E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04{file_ending}', {mz_list}, 5)"
+        time_vals = timeit.repeat(rep_function, globals=globals(), number=1, repeat=10)
+        fun_name = fun_i.replace("get_multichrom_", "")
+        time_df = pd.DataFrame({"n_chroms":n_chroms, "method":fun_name, "time":time_vals})
+        time_df.to_csv('data/dbloopjoinuni_times.csv', mode='a', header=False, index=False)
