@@ -8,12 +8,12 @@ import os
 import random
 
 # Create databases from mzML files if they don't already exist
-if(not(os.path.exists("E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01.sqlite"))):
-    turn_mzml_sqlite("E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01.mzML", "E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01.sqlite")
-    turn_mzml_duckdb("E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01.mzML", "E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01.duckdb")
-    turn_mzml_parquet("E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01.mzML", "E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01_pqds")
+if(not(os.path.exists("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.sqlite"))):
+    turn_mzml_sqlite("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", "E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.sqlite")
+    turn_mzml_duckdb("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", "E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.duckdb")
+    turn_mzml_parquet("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", "E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04_pqds")
 
-conn = sqlite3.connect("E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01.sqlite")
+conn = sqlite3.connect("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.sqlite")
 top_int_df = pd.read_sql_query("SELECT * FROM MS1 ORDER BY int DESC LIMIT 30000", conn)
 top_masses = []
 top_rts = []
@@ -195,18 +195,21 @@ def get_multichrom_parquet_loop(pqds_dir, mzs, ppm):
     return pd.concat(scan_data, ignore_index=True)
 
 function_list = [
-#    ("pyteomics", "mzml_pyteomics", ".mzML"),
-#    ("pyopenms", "mzml_pyopenms", ".mzML"),
-#    ("pyopenms_2DPeak", "mzml_pyopenms_2DPeak", ".mzML"),
-#    ("pymzml", "mzml_pymzml", ".mzML"),
-#    ("mzMLb", "mzmlb", ".mzMLb"),
-#    ("mzDB", "mzdb", ".raw.mzDB"),
-#    ("MZA", "mza", ".mza"),
-#    ("mz5", "mz5", ".mz5"),
+    ("pyteomics", "mzml_pyteomics", ".mzML"),
+    ("pyopenms", "mzml_pyopenms", ".mzML"),
+    ("pyopenms_2DPeak", "mzml_pyopenms_2Dpeak", ".mzML"),
+    ("pymzml", "mzml_pymzml", ".mzML"),
+    ("mzMLb", "mzmlb", ".mzMLb"),
+    ("mzDB", "mzdb", ".raw.mzDB"),
+    ("MZA", "mza", ".mza"),
+    ("mz5", "mz5", ".mz5"),
     ("SQLite", "sqlite_loop", ".sqlite"),
     ("DuckDB", "duckdb_loop", ".duckdb"),
     ("Parquet", "parquet_loop", "_pqds")
 ]
+
+init_df = pd.DataFrame(columns=["n_chroms", "method", "time"])
+init_df.to_csv('data/multichrom_times.csv', index=False)
 
 def time_multichrom(fun_suffix, file_ending, mz_list, verbose=True):
     if(verbose):
