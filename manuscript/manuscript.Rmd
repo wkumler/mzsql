@@ -19,8 +19,14 @@ library(ggtext)
 library(patchwork)
 
 method_names <- c("pyteomics", "pymzml", "pyopenms", "pyopenms_2DPeak",
-                  "mzMLb", "mzDB", "MZA", "mz5", "MZTree", "mzMD", 
+                  "mzMLb", "mzDB", "MZA", "mz5", 
+                  "MZTree", "mzMD", 
                   "SQLite", "DuckDB", "Parquet")
+method_colors <- c("#0B4F5B", "#147C8F", "#21A8C0", "#44C3DA", 
+                   "#028e34", "#f4bb23", "#e0670b", "#a41118", 
+                   "#E25C76", "#E891A2", 
+                   "#580770", "#8A1BAC", "#B04ACF")
+
 
 ```
 
@@ -135,6 +141,11 @@ $picked_peaks
 
 Via %timeit% (need to redo these with randomization)
 
+
+## Hardware and software versioning
+
+
+
 # Results
 
 ## All existing MS data formats demand a high level of domain knowledge
@@ -186,9 +197,10 @@ all_sizes <- read_csv("data/file_sizes.csv") %>%
 
 time_boxplot <- all_timings %>%
   ggplot() +
-  geom_boxplot(aes(x=method, y=time)) +
+  geom_boxplot(aes(x=method, y=time, color=method)) +
   facet_wrap(~query) +
   scale_y_log10() +
+  scale_color_manual(breaks = method_names, values=method_colors) +
   labs(x=NULL, y="Time (seconds)", color=NULL) +
   theme_bw() +
   theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5),
@@ -196,13 +208,15 @@ time_boxplot <- all_timings %>%
 size_barplot <- all_sizes %>%
   filter(!method%in%c("pyteomics", "pyopenms", "pyopenms_2DPeak")) %>%
   mutate(method=as.character(method)) %>%
-  mutate(method=ifelse(method=="pymzml", "mzml", method)) %>%
-  mutate(method=factor(method, levels=c("mzml", method_names))) %>%
+  mutate(method=ifelse(method=="pymzml", "mzML", method)) %>%
+  mutate(method=factor(method, levels=c("mzML", method_names))) %>%
   mutate(query="File size") %>%
   ggplot() +
   geom_hline(yintercept = 0) +
-  geom_col(aes(x=method, y=file_size/1e6), color="black") +
+  geom_col(aes(x=method, y=file_size/1e6, fill=method), color="black") +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  scale_fill_manual(breaks = c("mzML", method_names), 
+                    values=c("#147C8F", method_colors)) +
   facet_wrap(~query) +
   labs(x=NULL, y="File size (MB)", fill="File type") +
   theme_bw() +
@@ -263,7 +277,9 @@ init_outside_gp / pyopenms_precomp_gp
 ggsave("figures/supp_preload_fig.png", width = 6.5, height=5)
 ```
 
-*Supplemental figure XX: Timing information with and without pre-loading the object into Python prior to extraction. Panel A) shows the number of seconds required to extract a scan for the three mzML parsers plus the mzMLb, MZA, and mz5 file types. Panel B) shows the number of seconds required for pyopenms to perform each of the *
+![](figures/supp_preload_fig.png)
+
+*Supplemental figure XX: Timing information with and without pre-loading the object into Python prior to extraction. Panel A) shows the number of seconds required to extract a scan for the three mzML parsers plus the mzMLb, MZA, and mz5 file types. Panel B) shows the number of seconds required for pyopenms to perform each of the queries if the initial data load was removed from the timing count. Error bars show 3x replicate queries of 5x different targets.*
 
 ### Spectrum extraction
 
@@ -277,31 +293,133 @@ Ion chromatogram extraction and retention time range subsets were a key metric f
 
 MzTree and mzMD are both file types optimized exclusively for chromatogram extraction and performed very well on the EIC metric and were two orders of magnitude faster than those parsing mzMLs, with mzMD surprisingly less performant than the older MzTree file type it was based on. However, we also note that both Java-based applications have a slow initial file load step that must be done through a GUI and therefore could not be counted in the timing comparison, the inclusion of which would likely mitigate any advantage for a single chromatogram extraction. The mzDB file type is also optimized for chromatogram extraction and was an order of magnitude faster than the other existing file types for which all queries could be run (MzTree and mzMD do not provide interfaces for spectrum extraction or MS2 data).
 
-The SQLite, DuckDB, and Parquet formats were just as speedy as mzMD and MzTree with sub-second SQLite taking half a second, Parquet requiring a tenth of a second, and DuckDB reaching query times of hundredths of a second, far outstripping the seconds or even minutes typically expected of this task and resulting in a functionally instantaneous interaction for the user.
+The SQLite, DuckDB, and Parquet formats were just as speedy as mzMD and MzTree with SQLite taking half a second, Parquet requiring a tenth of a second, and DuckDB reaching query times of hundredths of a second, far outstripping the seconds or even minutes typically expected of this task and resulting in a functionally instantaneous interaction for the user.
 
-Retention time range extraction times were an average of the single-spectrum extraction and the chromatogram extraction times across the board, potentially hinting at a major predictive factor in timing estimation being the total amount of scan parsing required.
+Retention time range extraction times were an average of the single-spectrum extraction and the chromatogram extraction times across the board. potentially hinting at a major predictive factor in timing estimation being the total amount of scan parsing required.
 
 ### MS/MS precursor and fragment search
 
+We also investigated the efficacy of the various MS data formats for MS/MS data and found that support for fragmentation data searches was lacking or absent from the documentation and exposed functionality of each of these file types, requiring custom implementations every time. Despite both precursor searches (where all the precursors of a given fragment are found) and fragment searches (where all the fragments of a given precursor are found) representing intuitive and useful methods of MS/MS data processing, these timings were consistently among the slowest of the six query types for the non-database methods (Figure XX, rightmost panels).
+
+All existing MS data types required multiple seconds to perform a single fragment search (Figure XX, bottom-right panel), representing a significant bottleneck for any downstream analysis requiring the data associated with the fragments of a given precursor. The SQL-based parsers, on the other hand, all took fractions of a second and consistently returned the relevant data hundreds of times more quickly than existing methods. The same was true for a precursor search across all methods aside from mzDB (Figure XX, bottom middle panel), which benefited significantly from constructing a single bounding box for all MS/MS information that requires a single decoding into computer memory, though this strategy will fail for any file with sufficiently large MS/MS data.
+
 ### File sizes
 
+File size is another important constraint on the efficacy of various MS formats. We measured the size on disk of each of the file types and found that they varied by approximately an order of magnitude, with HDF-based file types hovering around one-third the size of the mzML (83 megabytes, MB) while mzDB and mzMD were larger (108 MB and 96 MB, respectively). The SQLite object was the largest on disk of all the file types, nearly doubling the mzML's size at 145 MB, while DuckDB was on par with MZA at two-thirds of the mzML (54 MB) and Parquet improved slightly upon that again with its columnar-based storage format (Figure XX).
 
+However, these comparisons are not perfect because not all files store exactly the same data. MZTree and mzMD appear to entirely lack the MS/MS information in the sample DDA file, representing a potentially significant size reduction that's difficult to estimate though the extraction of the same file via `msconvert` containing only MS<sup>1</sup> scans was 64 MB, a 23% size reduction. The SQLite, DuckDB, and Parquet formats also lack the scan and file metadata that's present in the other file types, though it is difficult to estimate the fraction of disk space allocated for this (and which will depend upon the precise definition of metadata).
 
-## Timings for a dataset with multiple files 
+## Timings for multiple chromatograms
 
-The single-file, single-metric case discussed above and shown in Figure XX is largely a worst-case scenario for many MS data systems that have a slow initial setup step that makes downstream analysis faster. To compare these systems more fairly to our database schema, we also tested timings across multiple files and queries of more than a single metric.
+The single-file, single-metric case discussed above and shown in Figure XX is largely a worst-case scenario for many MS data systems that have a slow initial setup step to make downstream analysis faster. To compare these systems more fairly to our database schema, we also tested timings across multiple chromatograms. In each case, this was implemented as a for loop iterating over an increasing number of chromatograms corresponding to the largest intensity ions in the file (Figure XX).
 
+```{r}
+multichrom_times <- read_csv("data/multichrom_times.csv")
+timelabs <- c("0.01 seconds", "One second", "One minute", "One hour")
+multichrom_times %>%
+  mutate(method=factor(method, levels=method_names)) %>%
+  ggplot(aes(x=n_chroms, y=time, color=method, fill=method)) +
+  geom_abline(slope=1, intercept=-3:3, color="black") +
+  geom_smooth(method="lm", formula="y~x", alpha=0.2, fill="grey50") +
+  geom_point(position = position_dodge(width=0.1), color="black", pch=21, size=3) +
+  scale_y_log10(breaks=c(0.01, 1, 60, 3600), labels=timelabs) +
+  scale_x_log10(breaks=c(1, 3, 10, 30, 100)) +
+  scale_fill_manual(breaks = method_names, values=method_colors, 
+                    aesthetics = c("fill", "color")) +
+  labs(x="Number of chromatograms extracted", y="Time required",
+       color=NULL, fill=NULL) +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank())
+ggsave("figures/multichrom_fig.png", width = 6.5, height=5)
+```
 
+![](figures/multichrom_fig.png)
 
-## Database optimization
+*Figure XX: Scatter plot of the time required to extract multiple chromatograms using various methods on logarithmic axes. Best-fit linear models have been added for each method are shown behind triplicate timing measurements. Transparent intervals around each best-fit line show a single standard error of the mean. Chromatograms correspond to the largest intensity ions in the file. 1:1 lines have been added in black behind the data for comparison.*
 
-1) Indices and ordering
-2) Peak data extraction via joins vs loops vs unified query
+Most methods were linear extrapolations of the single chromatogram numbers shown above as expected from a simple for loop, with notable exceptions for pyteomics (and thus the mzMLb format), the 2D peak method of pyopenms, and DuckDB (Figure XX). pyteomics and pyopenms both had significant overhead upon initial load that resulted in faster query times afterward that performed better than a 1:1 extrapolation would expect, with pyopenms matching SQLite's speed after 10 chromatograms and Parquet's speed after 30. Interestingly, the methods that had a best-fit linear slope less than 1:1 also all had exponential fits, with performance at high chromatogram number actually worse than would be expected from a prediction fit to the timings for 1 and 3 chromatogram extractions (Supplemental figure XX).
+
+```{r}
+multichrom_times <- read_csv("data/multichrom_times.csv")
+multichrom_baseline_df <- multichrom_times %>%
+  filter(n_chroms==1) %>%
+  summarise(time=mean(time), .by=method) %>%
+  mutate(method=factor(method, levels=method_names))
+multichrom_times %>%
+  mutate(method=factor(method, levels=method_names)) %>%
+  ggplot(aes(x=n_chroms, y=time, color=method, fill=method)) +
+  geom_abline(aes(slope=1, intercept=log10(time)), data=multichrom_baseline_df) +
+  geom_smooth(method="lm", formula="y~x", color="black") +
+  geom_point(position = position_dodge(width=0.1), color="black", pch=21, size=3) +
+  scale_y_log10(expand=expansion(0.1)) +
+  scale_x_log10(breaks=unique(multichrom_times$n_chroms), expand=expansion(0.1)) +
+  scale_fill_manual(breaks = method_names, values=method_colors, 
+                    aesthetics = c("fill", "color")) +
+  facet_wrap(~method, scales="free_y") +
+  labs(x="Number of chromatograms extracted", y="Time required (seconds)") +
+  theme_bw() +
+  theme(legend.position = "none")
+ggsave("figures/supp_multichrom_facets.png", width = 6.5, height=5)
+```
+
+![](figures/supp_multichrom_facets.png)
+
+*Supplemental figure XX: Data from main text Figure XX with independent y-axes showing scatter plots of the time required to extract multiple chromatograms using various methods on logarithmic axes. Best-fit linear models have been added for each method are shown behind triplicate timing measurements. Transparent intervals around each best-fit line show a single standard error of the mean.*
+
+We also explored whether database queries could be improved via the use of either a unified query (single SQL statement with multiple OR clauses for each ion's *m/z* range) or a non-equi join between a peak table with *m/z* minimum and maximum columns (Supplemental Figure XX). SQLite and Parquet performed ~3-5 times faster with the unified query than with the loop method despite the necessity of and additional processing step for the looped query to correctly assign each data point to its original peak information. The opposite was true for DuckDB likely due to its optimized reader, with the unified query consistently outperformed by the non-equi join when 100 chromatograms were extracted.
+
+```{r}
+type_labels = c("<span style='color:#a41118'>For loop</span>", 
+               "<span style='color:#f4bb23'>Unified query</span>",
+               "<span style='color:#147C8F'>Non-equi join</span>")
+read_csv("data/dbloopjoinuni_times.csv") %>%
+  separate(method, into = c("method", "type")) %>%
+  mutate(type=case_when(
+    type=="join"~"Non-equi join",
+    type=="loop"~"For loop",
+    type=="unified"~"Unified query"
+  )) %>%
+  mutate(type=factor(type, levels=c("For loop", "Unified query", "Non-equi join"),
+                     labels=type_labels)) %>%
+  mutate(method=factor(method, levels=c("sqlite", "duckdb", "parquet"),
+                       labels=c("SQLite", "DuckDB", "Parquet"))) %>%
+  ggplot(aes(x=n_chroms, y=time, fill=type)) +
+  geom_point(position=position_dodge(width = 0.1), color="black", size=3, pch=21) +
+  facet_wrap(~method, nrow=1) +
+  scale_y_log10() +
+  scale_x_log10(breaks=c(1, 3, 10, 30, 100)) +
+  scale_fill_manual(breaks=type_labels, values = c("#a41118", "#f4bb23", "#147C8F")) +
+  labs(x="Number of chromatograms", y="Time required (seconds)", fill=NULL) +
+  theme_bw() +
+  theme(legend.position = "inside", legend.justification.inside = c(0.5, 0.95),
+        legend.background = element_rect(color='black'),
+        legend.text=element_markdown(),
+        plot.title.position = "plot", 
+        plot.caption.position =  "plot")
+ggsave("figures/supp_dbloopjoinuni.png", width = 6.5, height=5)
+```
+
+![](figures/supp_dbloopjoinuni.png)
+
+*Supplemental figure XX: Scatter showing time required to extract chromatograms from SQLite, DuckDB, and Parquet databases using different methods denoted by color. Ten replicates are shown for each data point.*
+
+## Database optimization via indices/ordering and multi-file constructions
+
+Databases also provide multiple ways to optimize queries.
+
+```{r}
+read_csv("data/idx_ord_times.csv") %>%
+  ggplot() +
+  geom_boxplot(aes(x=file_size/1e6, y=time, color=method)) +
+  scale_y_log10()
+```
 
 
 # Discussion
 
-While the gap between data scientist and mass spectrometrist continues to narrow, current implementations of MS data storage systems almost seem designed to *increase* it. This is accomplished by extremely poor documentation that makes it difficult to do anything beyond the original designer's intent, typically with data structures that are not familiar to the MS expert.
+As the gap between data scientist and mass spectrometrist continues to narrow, mass spectrometry (MS) data formats should facilitate this convergence. 
+
+Large gaps etc. accomplished by extremely poor documentation that makes it difficult to do anything beyond the original designer's intent, typically with data structures that are not familiar to the MS expert.
 
 Not a single parser was without flaws - all were either slow, poorly documented, or had highly limited functionality
 
@@ -319,9 +437,11 @@ Querying things by scan number is dumb.
 
 DuckDB's zonemaps operate similarly to mzDB's bounding boxes
 
-Unlikely that databases replace the original files so this is meant to be an auxiliary data structure alongside the .raw or .mzML files, not a substitute.
+Unlikely that databases replace the original files so this is meant to be an auxiliary data structure **alongside** the .raw or .mzML files, not a substitute.
 
-Databases place a larger burden on the initial builder/designer and much less on the end user.
+Databases place a larger burden on the initial builder/designer and much less on the end user
+
+Better compression algorithms and fancier data structures can easily improve upon the text-based XML in both size on disk and speed of access but also tend to accumulate significant technical debt. Alternatives must therefore compete not only in computational efficacy but also in simplicity to allow widespread adoption, a feat thus far unachieved.
 
 Ultimately, the design decision for mass spectrometry data format will likely result from a variety of factors, most crucially 1) initial vendor type, 2) programming language of the developer, 3) types of MS data included (MS1-only vs MS2+, metadata), 4) whether the entire file will be processed or only a subset (subsetting doesn't matter if the whole file is going to be investigated anyway), 
 
