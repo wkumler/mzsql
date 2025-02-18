@@ -4,4 +4,4 @@ SQLite (indexed),206209024
 DuckDB,54013952
 DuckDB (ordered),112996352
 Parquet,39542523
-Parquet (ordered),0
+Parquet (ordered),39542523

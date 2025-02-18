@@ -46,7 +46,7 @@ for target_mz in top_masses:
 
 file_sizes = {}
 for name, suffix, filetype in function_list:
-    if(name == "Parquet"):
+    if(suffix == "parquet"):
         dirsize = sum(
             os.path.getsize(os.path.join(root, f)) 
             for root, _, files in os.walk("E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01_pqds") 
