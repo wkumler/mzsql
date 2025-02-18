@@ -43,3 +43,17 @@ for target_mz in top_masses:
         time_taken = time_chrom(suffix, filetype, target_mz, 10, verbose=True)
         time_df = pd.DataFrame({"query":["chrom"], "target":[target_mz], "method":[name], "time":time_taken})
         time_df.to_csv('data/idx_ord_times.csv', mode='a', header=False, index=False)
+
+file_sizes = {}
+for name, suffix, filetype in function_list:
+    if(name == "Parquet"):
+        dirsize = sum(
+            os.path.getsize(os.path.join(root, f)) 
+            for root, _, files in os.walk("E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01_pqds") 
+            for f in files
+        )
+        file_sizes[name] = dirsize
+    else:
+        file_sizes[name] = os.path.getsize(f"E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01{filetype}")
+
+pd.DataFrame(file_sizes.items(), columns=["method", "file_size"]).to_csv("data/idx_sizes.csv", index=False)
