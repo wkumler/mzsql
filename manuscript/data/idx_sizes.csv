@@ -1,7 +1,0 @@
-method,file_size
-SQLite,144912384
-SQLite (indexed),206209024
-DuckDB,54013952
-DuckDB (ordered),112996352
-Parquet,39542523
-Parquet (ordered),39542523

@@ -37,6 +37,9 @@ function_list = [
     ("Parquet (ordered)", "parquet", "_pqds_ord")
 ]
 
+init_df = pd.DataFrame(columns=["query", "target", "method","time"])
+init_df.to_csv('data/idx_ord_times.csv', index=False)
+
 for target_mz in top_masses:
     print(target_mz)
     for name, suffix, filetype in function_list:
@@ -56,4 +59,6 @@ for name, suffix, filetype in function_list:
     else:
         file_sizes[name] = os.path.getsize(f"E:/mzsql/MTBLS10066/20220921_LEAP-POS_BL01{filetype}")
 
-pd.DataFrame(file_sizes.items(), columns=["method", "file_size"]).to_csv("data/idx_sizes.csv", index=False)
+
+time_data = pd.DataFrame(file_sizes.items(), columns=["method", "file_size"])
+pd.read_csv('data/idx_ord_times.csv').merge(time_data, on="method", how="left").to_csv('data/idx_ord_times.csv')
