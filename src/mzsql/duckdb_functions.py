@@ -52,12 +52,20 @@ def turn_mzml_duckdb(files, outfile, ordered=None):
 
     if ordered is not None:
         if ordered == "rt":
-            conn.execute(f"CREATE TABLE MS1 AS SELECT * FROM MS1 ORDER BY {ordered}")
-            conn.execute(f"CREATE TABLE MS2 AS SELECT * FROM MS2 ORDER BY {ordered}")
+            conn.execute(f"CREATE TABLE MS1_ord AS SELECT * FROM MS1 ORDER BY {ordered}")
+            conn.execute(f"DROP TABLE MS1")
+            conn.execute(f"ALTER TABLE MS1_ord RENAME TO MS1")
+            conn.execute(f"CREATE TABLE MS2_ord AS SELECT * FROM MS2 ORDER BY {ordered}")
+            conn.execute(f"DROP TABLE MS2")
+            conn.execute(f"ALTER TABLE MS2_ord RENAME TO MS2")
         if ordered == "mz":
-            conn.execute(f"CREATE TABLE MS1 AS SELECT * FROM MS1 ORDER BY {ordered}")
+            conn.execute(f"CREATE TABLE MS1_ord AS SELECT * FROM MS1 ORDER BY {ordered}")
+            conn.execute(f"DROP TABLE MS1")
+            conn.execute(f"ALTER TABLE MS1_ord RENAME TO MS1")
         if ordered in ["fragmz", "premz"]:
-            conn.execute(f"CREATE TABLE MS2 AS SELECT * FROM MS2 ORDER BY {ordered}")
+            conn.execute(f"CREATE TABLE MS2_ord AS SELECT * FROM MS2 ORDER BY {ordered}")
+            conn.execute(f"DROP TABLE MS2")
+            conn.execute(f"ALTER TABLE MS2_ord RENAME TO MS2")
     conn.close()
 
     return outfile

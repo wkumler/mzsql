@@ -28,8 +28,15 @@ def turn_mzml_parquet(file, outdir, ordered=None):
     all_MS1 = pd.concat(MS1_dfs, ignore_index=True)
     all_MS2 = pd.concat(MS2_dfs, ignore_index=True)
     if ordered is not None:
-        all_MS1.sort_values(by=ordered, inplace=True)
-        all_MS2.sort_values(by=ordered, inplace=True)
+        if ordered == "rt":
+            all_MS1.sort_values(by=ordered, inplace=True)
+            all_MS2.sort_values(by=ordered, inplace=True)
+        if ordered == "mz":
+            all_MS1.sort_values(by=ordered, inplace=True)
+        if ordered == "fragmz":
+            all_MS2.sort_values(by=ordered, inplace=True)
+        if ordered == "premz":
+            all_MS2.sort_values(by=ordered, inplace=True)
 
     table_MS1 = pa.Table.from_pandas(all_MS1)
     table_MS2 = pa.Table.from_pandas(all_MS2)
