@@ -136,9 +136,6 @@ def get_multichrom_parquet_unified(pqds_dir, mzs, ppm):
 
 
 
-init_df = pd.DataFrame(columns=["method", "time"])
-init_df.to_csv('data/dbloopjoinuni_times.csv', index=False)
-
 function_list = [
     ("get_multichrom_duckdb_loop", ".duckdb"),
     ("get_multichrom_duckdb_join", ".duckdb"),
@@ -151,7 +148,7 @@ function_list = [
 ]
 
 
-init_df = pd.DataFrame(columns=["method", "time"])
+init_df = pd.DataFrame(columns=["n_chroms", "method", "time"])
 init_df.to_csv('data/dbloopjoinuni_times.csv', index=False)
 
 random.seed(123)
