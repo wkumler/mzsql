@@ -47,25 +47,16 @@ def turn_mzml_duckdb(files, outfile, ordered=None):
     
         all_MS1 = pd.concat(MS1_dfs, ignore_index=True)
         all_MS2 = pd.concat(MS2_dfs, ignore_index=True)
+        if ordered is not None:
+            if ordered == "rt":
+                all_MS1.sort_values("rt", inplace=True)
+                all_MS2.sort_values("rt", inplace=True)
+            if ordered == "mz":
+                all_MS1.sort_values("mz", inplace=True)
+            if ordered in ["fragmz", "premz"]:
+                all_MS1.sort_values(ordered, inplace=True)
         conn.execute("INSERT INTO MS1 SELECT * FROM all_MS1")
         conn.execute("INSERT INTO MS2 SELECT * FROM all_MS2")
-
-    if ordered is not None:
-        if ordered == "rt":
-            conn.execute(f"CREATE TABLE MS1_ord AS SELECT * FROM MS1 ORDER BY {ordered}")
-            conn.execute(f"DROP TABLE MS1")
-            conn.execute(f"ALTER TABLE MS1_ord RENAME TO MS1")
-            conn.execute(f"CREATE TABLE MS2_ord AS SELECT * FROM MS2 ORDER BY {ordered}")
-            conn.execute(f"DROP TABLE MS2")
-            conn.execute(f"ALTER TABLE MS2_ord RENAME TO MS2")
-        if ordered == "mz":
-            conn.execute(f"CREATE TABLE MS1_ord AS SELECT * FROM MS1 ORDER BY {ordered}")
-            conn.execute(f"DROP TABLE MS1")
-            conn.execute(f"ALTER TABLE MS1_ord RENAME TO MS1")
-        if ordered in ["fragmz", "premz"]:
-            conn.execute(f"CREATE TABLE MS2_ord AS SELECT * FROM MS2 ORDER BY {ordered}")
-            conn.execute(f"DROP TABLE MS2")
-            conn.execute(f"ALTER TABLE MS2_ord RENAME TO MS2")
     conn.close()
 
     return outfile
