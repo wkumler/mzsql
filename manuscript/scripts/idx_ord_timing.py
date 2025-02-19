@@ -61,4 +61,4 @@ for name, suffix, filetype in function_list:
 
 
 time_data = pd.DataFrame(file_sizes.items(), columns=["method", "file_size"])
-pd.read_csv('data/idx_ord_times.csv').merge(time_data, on="method", how="left").to_csv('data/idx_ord_times.csv')
+pd.read_csv('data/idx_ord_times.csv').merge(time_data, on="method", how="left").to_csv('data/idx_ord_times.csv', index=False)
