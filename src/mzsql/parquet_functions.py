@@ -9,44 +9,47 @@ import pyarrow.compute as pc
 import pyarrow.dataset as ds
 import os
 
-def turn_mzml_parquet(file, outdir, ordered=None):
+def turn_mzml_parquet(files, outdir, ordered=None):
     MS1_dfs = []
     MS2_dfs = []
-    for spectrum in pyteomics.mzml.MzML(file):
-        idx = int(spectrum['id'].split("scan=")[-1].split()[0])
-        mz_vals = spectrum['m/z array']
-        int_vals = spectrum['intensity array']
-        rt_val = spectrum['scanList']['scan'][0]['scan start time']
-        if spectrum['ms level'] == 1:
-            df_scan = pd.DataFrame({'id': idx, 'mslevel':"MS1", 'mz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
-            MS1_dfs.append(df_scan)
-        if spectrum["ms level"] == 2:
-            premz_val = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window target m/z']
-            df_scan = pd.DataFrame({'id': idx, 'mslevel':"MS2", 'premz': premz_val, 'fragmz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
-            MS2_dfs.append(df_scan)
-
-    all_MS1 = pd.concat(MS1_dfs, ignore_index=True)
-    all_MS2 = pd.concat(MS2_dfs, ignore_index=True)
-    if ordered is not None:
-        if ordered == "rt":
-            all_MS1.sort_values(by=ordered, inplace=True)
-            all_MS2.sort_values(by=ordered, inplace=True)
-        if ordered == "mz":
-            all_MS1.sort_values(by=ordered, inplace=True)
-        if ordered == "fragmz":
-            all_MS2.sort_values(by=ordered, inplace=True)
-        if ordered == "premz":
-            all_MS2.sort_values(by=ordered, inplace=True)
-
-    table_MS1 = pa.Table.from_pandas(all_MS1)
-    table_MS2 = pa.Table.from_pandas(all_MS2)
-
-    basename = os.path.splitext(os.path.basename(file))[0]
-    os.makedirs(outdir, exist_ok=True)
-    os.makedirs(f"{outdir}/MS1", exist_ok=True)
-    os.makedirs(f"{outdir}/MS2", exist_ok=True)
-    pq.write_table(table_MS1, f"{outdir}/MS1/{basename}.parquet")
-    pq.write_table(table_MS2, f"{outdir}/MS2/{basename}.parquet")
+    if isinstance(files, str):
+        files = [files]
+    for file in files:
+        for spectrum in pyteomics.mzml.MzML(file):
+            idx = int(spectrum['id'].split("scan=")[-1].split()[0])
+            mz_vals = spectrum['m/z array']
+            int_vals = spectrum['intensity array']
+            rt_val = spectrum['scanList']['scan'][0]['scan start time']
+            if spectrum['ms level'] == 1:
+                df_scan = pd.DataFrame({'id': idx, 'mslevel':"MS1", 'mz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
+                MS1_dfs.append(df_scan)
+            if spectrum["ms level"] == 2:
+                premz_val = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window target m/z']
+                df_scan = pd.DataFrame({'id': idx, 'mslevel':"MS2", 'premz': premz_val, 'fragmz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
+                MS2_dfs.append(df_scan)
+    
+        all_MS1 = pd.concat(MS1_dfs, ignore_index=True)
+        all_MS2 = pd.concat(MS2_dfs, ignore_index=True)
+        if ordered is not None:
+            if ordered == "rt":
+                all_MS1.sort_values(by=ordered, inplace=True)
+                all_MS2.sort_values(by=ordered, inplace=True)
+            if ordered == "mz":
+                all_MS1.sort_values(by=ordered, inplace=True)
+            if ordered == "fragmz":
+                all_MS2.sort_values(by=ordered, inplace=True)
+            if ordered == "premz":
+                all_MS2.sort_values(by=ordered, inplace=True)
+    
+        table_MS1 = pa.Table.from_pandas(all_MS1)
+        table_MS2 = pa.Table.from_pandas(all_MS2)
+    
+        basename = os.path.splitext(os.path.basename(file))[0]
+        os.makedirs(outdir, exist_ok=True)
+        os.makedirs(f"{outdir}/MS1", exist_ok=True)
+        os.makedirs(f"{outdir}/MS2", exist_ok=True)
+        pq.write_table(table_MS1, f"{outdir}/MS1/{basename}.parquet")
+        pq.write_table(table_MS2, f"{outdir}/MS2/{basename}.parquet")
 
     return outdir
 
