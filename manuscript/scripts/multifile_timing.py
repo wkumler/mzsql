@@ -75,4 +75,4 @@ for mz_i in top_masses:
 
 singlefile_df = pd.concat(singlefile_timings, ignore_index=True)
 multifile_df = pd.concat(multifile_timings, ignore_index=True)
-pd.concat(singlefile_df, multifile_df, ignore_index=True).to_csv('data/multifile_times.csv', mode='w', index=False)
+pd.concat([singlefile_df, multifile_df], ignore_index=True).to_csv('data/multifile_times.csv', mode='w', index=False)
