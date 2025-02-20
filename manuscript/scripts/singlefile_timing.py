@@ -138,3 +138,7 @@ for name, suffix, filetype in function_list:
 pd.DataFrame(file_sizes.items(), columns=["method", "file_size"]).to_csv("data/file_sizes.csv", index=False)
 
 print("Success!")
+
+# msconvert .\20220921_LEAP-POS_BL01.mzML --filter "msLevel 1" -o "ms1_only"
+# os.path.getsize("ms1_only/20220921_LEAP-POS_BL01.mzML")/os.path.getsize("20220921_LEAP-POS_BL01.mzML")
+
