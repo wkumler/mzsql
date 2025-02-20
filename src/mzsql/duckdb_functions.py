@@ -64,7 +64,7 @@ def turn_mzml_duckdb(files, outfile, ordered=None):
 def get_chrom_duckdb(file, mz, ppm):
     conn = duckdb.connect(file)
     mz_min, mz_max = pmppm(mz, ppm)
-    query = "SELECT mz, int, rt FROM MS1 WHERE mz BETWEEN ? AND ?"
+    query = "SELECT filename, mz, int, rt FROM MS1 WHERE mz BETWEEN ? AND ?"
     query_data = conn.execute(query, (mz_min, mz_max)).fetchdf()    
     conn.close()
     return query_data
