@@ -48,15 +48,22 @@ for mz_i in top_masses:
     for n_files in [1, 10, 100]:
         print(n_files)
         this_multifile_subset = multifile_subset[:n_files]
+        total_time = {"duckdb":0, "sqlite":0, "parquet":0}
         for mzml_file in this_multifile_subset:
             for db_name, db_ending in [("duckdb", ".duckdb"), ("sqlite", ".sqlite"), ("parquet", "_pqds")]:
                 db_path = mzml_file.replace(".mzML", db_ending)
                 rep_function = f"get_chrom_{db_name}('{db_path}', {mz_i}, 5)"
-                time_vals = timeit.repeat(rep_function, globals=globals(), number=1, repeat=3)
-                time_data = pd.DataFrame({"method":db_name, "mz_target":mz_i, "n_files":n_files, "type":"singlefile",
-                                          "mzml_file":os.path.basename(mzml_file), 
-                                          "time":time_vals})
-                singlefile_timings.append(time_data)
+                time_val = timeit.repeat(rep_function, globals=globals(), number=1, repeat=1)
+                total_time[db_name] += time_val[0]
+        for db_name, time_val in total_time.items():
+            time_data = pd.DataFrame([{
+                "method": db_name,
+                "mz_target": mz_i,
+                "n_files": n_files,
+                "type": "singlefile",
+                "time": time_val
+            }])
+            singlefile_timings.append(time_data)
 
 multifile_timings = []
 for mz_i in top_masses:
@@ -67,7 +74,7 @@ for mz_i in top_masses:
             db_path = f"E:/mzsql/MTBLS10066/multifile_{n_files}{db_ending}"
             print(db_path)
             rep_function = f"get_chrom_{db_name}('{db_path}', {mz_i}, 5)"
-            time_vals = timeit.repeat(rep_function, globals=globals(), number=1, repeat=3)
+            time_vals = timeit.repeat(rep_function, globals=globals(), number=1, repeat=1)
             time_data = pd.DataFrame({"method":db_name, "mz_target":mz_i, "n_files":n_files, "type":"multifile",
                                       "mzml_file":os.path.basename(mzml_file), 
                                       "time":time_vals})
