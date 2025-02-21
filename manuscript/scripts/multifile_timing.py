@@ -21,9 +21,15 @@ multifile_subset = [f.replace("\\", "/") for f in multifile_subset]
 # turn_mzml_sqlite(multifile_subset[0], outfile="E:/mzsql/MTBLS10066/multifile_1.sqlite", ordered="mz")
 # turn_mzml_duckdb(multifile_subset[0], outfile="E:/mzsql/MTBLS10066/multifile_1.duckdb", ordered="mz")
 # turn_mzml_parquet(multifile_subset[0], outdir="E:/mzsql/MTBLS10066/multifile_1_pqds", ordered="mz")
+# turn_mzml_sqlite(multifile_subset[:3], outfile="E:/mzsql/MTBLS10066/multifile_3.sqlite", ordered="mz")
+# turn_mzml_duckdb(multifile_subset[:3], outfile="E:/mzsql/MTBLS10066/multifile_3.duckdb", ordered="mz")
+# turn_mzml_parquet(multifile_subset[:3], outdir="E:/mzsql/MTBLS10066/multifile_3_pqds", ordered="mz")
 # turn_mzml_sqlite(multifile_subset[:10], outfile="E:/mzsql/MTBLS10066/multifile_10.sqlite", ordered="mz")
 # turn_mzml_duckdb(multifile_subset[:10], outfile="E:/mzsql/MTBLS10066/multifile_10.duckdb", ordered="mz")
 # turn_mzml_parquet(multifile_subset[:10], outdir="E:/mzsql/MTBLS10066/multifile_10_pqds", ordered="mz")
+# turn_mzml_sqlite(multifile_subset[:30], outfile="E:/mzsql/MTBLS10066/multifile_30.sqlite", ordered="mz")
+# turn_mzml_duckdb(multifile_subset[:30], outfile="E:/mzsql/MTBLS10066/multifile_30.duckdb", ordered="mz")
+# turn_mzml_parquet(multifile_subset[:30], outdir="E:/mzsql/MTBLS10066/multifile_30_pqds", ordered="mz")
 # turn_mzml_sqlite(multifile_subset, outfile="E:/mzsql/MTBLS10066/multifile_100.sqlite", ordered="mz")
 # turn_mzml_duckdb(multifile_subset, outfile="E:/mzsql/MTBLS10066/multifile_100.duckdb", ordered="mz")
 # turn_mzml_parquet(multifile_subset, outdir="E:/mzsql/MTBLS10066/multifile_100_pqds", ordered="mz")
@@ -45,7 +51,7 @@ conn.close()
 singlefile_timings = []
 for mz_i in top_masses:
     print(mz_i)
-    for n_files in [1, 10, 100]:
+    for n_files in [1, 3, 10, 30, 100]:
         print(n_files)
         this_multifile_subset = multifile_subset[:n_files]
         total_time = {"duckdb":0, "sqlite":0, "parquet":0}
@@ -68,7 +74,7 @@ for mz_i in top_masses:
 multifile_timings = []
 for mz_i in top_masses:
     print(mz_i)
-    for n_files in [1, 10, 100]:
+    for n_files in [1, 3, 10, 30, 100]:
         print(n_files)
         for db_name, db_ending in [("duckdb", ".duckdb"), ("sqlite", ".sqlite"), ("parquet", "_pqds")]:
             db_path = f"E:/mzsql/MTBLS10066/multifile_{n_files}{db_ending}"
