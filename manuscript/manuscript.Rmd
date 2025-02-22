@@ -3,17 +3,16 @@ title: "Databases are an effective and efficient method for storage and access o
 author:
   - William Kumler
   - Anitra E. Ingalls
-output: word_document
+output: 
+  word_document:
+    reference_docx: template.docx
 bibliography:
 - Exported Items.bib
 csl: journal-of-proteome-research.csl
 ---
 
 ```{r setup, include=FALSE}
-options(timeout=3600)
-options(pillar.sigfig=7)
-options(digits=10)
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, include=FALSE, eval=FALSE)
 library(tidyverse)
 library(ggtext)
 library(patchwork)
@@ -26,7 +25,6 @@ method_colors <- c("#0B4F5B", "#147C8F", "#21A8C0", "#44C3DA",
                    "#028e34", "#f4bb23", "#e0670b", "#a41118", 
                    "#E25C76", "#E891A2", 
                    "#580770", "#8A1BAC", "#B04ACF")
-
 
 ```
 
@@ -42,13 +40,13 @@ Mass spectrometry (MS) still lacks a performant data access format. The mzML fil
 
 As a result, alternative file formats are proposed practically every year. These include direct improvements to the mzML format with indexing [@Rost2015] and better internal encoding of the data [@Bhamber2021], HDF5-based alternatives [@Bhamber2021; @Wilhelm2012; @Bilbao2023; @Tully2020; @Askenazi2017], relational databases [@Shah2010; @Bouyssie2015; @Handy2017; @Yang2022; @Beagley2009], or fully custom alternatives [@Rompp2011; @Lu2022]. Fundamentally, these alternatives implement tradeoffs between user sanity in exchange for access speed and/or size on disk with clever compression algorithms and modern data structures that move away from the human-readable format of the mzML. These optimized formats are inherently more difficult to understand and usually lack comprehensive documentation or examples (particularly across programming languages) making it difficult for new users to enjoy their benefits or extend their functionality. This steep learning curve, coupled with a lack of support in conversion tools such as Proteowizard’s msconvert [@Chambers2012], has prevented widespread adoption of these new formats despite their clear computational advantages. Such formats are also fragile in the sense that without community support, their continued development depends entirely on the original developers and easily become deprecated (as is the case with YAFMS, Shaduf, and mz5, all of whom have links in their papers that currently redirect to missing webpages). A simple, speedy, and small MS data format remains very much in demand.
 
-Relational databases are not new for MS workflows (see references above) and compete predominantly with HDF5-based methods. Both of these systems are widely used for big data and can be applied to MS data in a plethora of ways, leading to the proliferation of implementations we see today. Both backends provide excellent universality, larger-than-memory support, and rapid access to data, but HDF5-based systems excel at self-description and hierarchical structures [@Askenazi2017] while the relational database model is optimized for multi-table queries using a consistent syntax [@Cobb1970]. Relational databases are increasingly seen in MS workflows for both raw and processed data, with SQLite backends now supported in the popular peakpicking software xcms [@Smith2006] via the Spectra package [@Rainer2022] (though in-memory and HDF5 options are also supported) and on MetabolomicsWorkbench [@Sud2016] while the development of MassQL [@Jarmusch2022] demonstrates the increasing comfort that MS analysts have with the adoption of SQL.
+Relational databases are not new for MS workflows (see references above) and compete predominantly with HDF5-based methods. Both of these systems are widely used for big data and can be applied to MS data in a plethora of ways, leading to the proliferation of implementations we see today. Both backends provide excellent universality, larger-than-memory support, and rapid access to data, but HDF5-based systems excel at self-description and hierarchical structures [@Askenazi2017] while the relational database model is optimized for multi-table queries using a consistent syntax [@Codd1970]. Relational databases are increasingly seen in MS workflows for both raw and processed data, with SQLite backends now supported in the popular peakpicking software xcms [@Smith2006] via the Spectra package [@Rainer2022] (though in-memory and HDF5 options are also supported) and on MetabolomicsWorkbench [@Sud2016] while the development of MassQL [@Jarmusch2022] demonstrates the increasing comfort that MS analysts have with the adoption of SQL.
 
 Relational databases also have several distinct advantages over hierarchical or text-based systems, particularly in performing searches for subsets of data via indices. Importantly, this indexing differs from the byte-offset indexes that already exist in the indexed mzML and HDF5 formats because the search for a particular subset cannot be done efficiently with a byte-offset index when the m/z data is encoded, though access to a particular scan can be incredibly rapid. Additionally, data from multiple samples can be stored together in a single table, differing from formats like mzDB, mzTree, and mzMD and allowing queries of all dataset samples to be performed without looping through each file in turn, thereby avoiding the associated computational overhead and query complexity. 
 
-SQL databases also allow mass spectrometrists to access the continual improvements and long-term stability produced by the industries who specialize in these. While HDF5 is a common scientific data format, databases are constantly under development by industry titans deeply invested in their maintenance and optimization. Online analytical processing (OLAP) methods are particularly well suited for MS data given their optimization for read speed under the assumption of infrequent transactions, making modern systems such as DuckDB [@Raasveldt2019] or Apache Arrow’s columnar formats highly appealing while preserving the familiar serverless approach.
+SQL databases also allow mass spectrometrists to access the continual improvements and long-term stability produced by the industries who specialize in these. While HDF5 is a common scientific data format, databases are constantly under development by industry titans deeply invested in their maintenance and optimization. Online analytical processing (OLAP) methods are particularly well suited for MS data given their optimization for read speed under the assumption of infrequent transactions, making modern systems such as DuckDB [@Raasveldt2019] or Apache's Parquet formats highly appealing while preserving the familiar file-based serverless approach.
 
-Our previous work showed how the ragged arrays of MS data can be converted into a tidy database table in memory [@Kumler2022] and we now logically extend that method into proper database storage and access. Here, we test the hypothesis that a “vanilla” implementation of a relational database which exposes the raw m/z and intensity tuples is an intuitive and performant way of storing MS data for exploratory analysis, visualization, and quality control. We compare the time and space required to extract a representative data subset under six conditions and perform these tests on multiple databases as well as mzML and other MS data formats.
+Our previous work showed how the ragged arrays of MS data can be converted into a tidy database table in memory [@Kumler2022] and we now logically extend that method into proper database storage. Here, we test the hypothesis that a “vanilla” implementation of a relational database which exposes the raw m/z and intensity tuples is an intuitive and performant way of storing MS data for exploratory analysis, visualization, and quality control. We compare the time and space required to extract a representative data subset under six conditions and perform these tests on multiple databases as well as mzML and other MS data formats.
 
 # Experimental section
 
@@ -58,17 +56,13 @@ We explored the available documentation on PyPI and Github for each mass spectro
 
 ## Mass-spectrometry files
 
-Details about the size, number of scans (MS1 and MS2), RT range, etc. for the files
+We browsed Metabolights [@Haug2019] for suitable LCMS datasets, looking for studies that included 100+ gigabytes of data from both full scan and MS/MS analysis. We were also restricted to the Thermo Scientific .raw file format, as it was the most widely supported by alternative MS storage methods. We also excluded polarity-switching data as it is unclear whether all converters would be able to separate scans based on polarity.
 
-Metabolights search for
-1. MS1 & MS2 data
-2. .raw or .wiff file types (mzDB doesn't support .d or .mzML or .mzXML)
-3. 100+ GB folder
-4. Positive mode only(?)
+Files were downloaded as .raw. mzML, mz5, and mzMLb were all natively supported by Proteowizard's `msconvert` software (version 3.0.25009) while MZA (v1.24.11.16) and mzDB (v0.9.10_build20170802) had separate extensions to this executable enabling their own conversion. MzTree and mzMD were converted via their GUI which did not have release or versioning information available but were downloaded from Github (https://github.com/optimusmoose/MZTree and https://github.com/yrm9837/mzMD-java, respectively) and built via Maven (v3.9.9) for Java (v21.0.6). SQL databases were built using Python 3.11.11 with SQLite (v3.48.0) via the Python sqlite3 package (v2.6.0), DuckDB via the duckdb package (v1.1.3), and Parquet files via the pyarrow package (v19.0.0). We were additionally able to download and install 
 
-Converted via msconvert or custom implementation
+mzML access was done with Python's pyteomics package (v4.7.5), the pymzml package (v2.5.10), and the pyopenms package (3.0.0.dev20230306). MZA files were accessed via the mzapy library (v1.8.dev4 from the no_full_mz_array branch on Github) and via custom code built around the h5py package (3.12.1). Custom parsers were required for mzDB, mz5, MzTree, and mzMD.
 
-```{shell}
+```{shell, eval=FALSE}
 cd Documents\Will
 git clone https://github.com/wkumler/mzsql
 cd mzsql
@@ -103,13 +97,9 @@ E:
 cd mzsql\MTBLS10066
 
 msconvert *.raw --filter "peakPicking true 1-" --filter "polarity positive" 
-# Also convert neg mode to see what benefit to offer pos/neg combos
-msconvert *.raw --filter "peakPicking true 1-" --filter "polarity negative" -o "negative"
 msconvert *.raw --mzMLb --filter "peakPicking true 1-" --filter "polarity positive" 
 msconvert *.raw --mz5 --filter "peakPicking true 1-" --filter "polarity positive"
-
 for %f in (*.raw) do "C:\Program Files\ProteoWizard\raw2mzDB_0.9.10_build20170802\raw2mzDB.exe" -i %f -c 1-2 --safeMode
-
 for %f in (*.mzML) do mza.exe -file %f
 ```
 
@@ -142,11 +132,9 @@ $picked_peaks
 Via %timeit% (need to redo these with randomization)
 
 
-## Hardware and software versioning
-
-
-
 # Results
+
+We settled on a large dataset of gut microbiota LCMS files published in @Portlock2025 and available on Metabolights under accession number MTBLS10066.
 
 ## All existing MS data formats demand a high level of domain knowledge
 
@@ -156,31 +144,31 @@ We were able to obtain or write parsers for seven different existing mass spectr
 
 Conversion from the initial Thermo .raw file type to the open-source .mzML format was seamlessly performed by Proteowizard's `msconvert` library. Similarly, Proteowizard support for the .mz5 and .mzMLb file types made their conversion trivial.
 
-mzDB and MZA both had reasonably good documentation, both formats notably providing self-contained extensions to `msconvert` for ease of conversion. However, both converters provide limited coverage, with mzDB notably missing support for Waters and Agilent .d files while MZA currently lacks support for AB Sciex .wiff and Bruker .baf files and is only available via binary executable (.exe), restricting its use to Windows platforms. Additionally, both parsers appear to be unable to separate scans from a polarity-switching experiment or support any of the other filters available natively in `msconvert`, as additional arguments passed to the executable throw errors instead of being passed along to the algorithm.
+mzDB and MZA both had reasonably good documentation, both formats notably providing self-contained extensions to `msconvert` for ease of conversion. However, both converters provide limited coverage, with mzDB notably missing support for Waters and Agilent .d files while MZA currently lacks support for AB Sciex .wiff and Bruker .baf files. Both converters are only available via binary executable (.exe), restricting their use to Windows platforms. Additionally, both parsers appear to be unable to separate scans from a polarity-switching experiment or support any of the other filters available natively in `msconvert`, as additional arguments passed to the executable throw errors instead of being passed along to the original software.
 
 MZTree and its derivative, mzMD, provided significantly less documentation about the conversion process than the other file types. This documentation consisted solely of the README available in the associated Github repositories and their installation and deployment required rebuilding the Java applet, of which the bare-bones instructions make several assumptions about the user's PATH environmental variable. In the case of mzMD, no documentation for installation and build was provided and this instead needed to be deduced from MZTree. Additionally, we ran into issues with hardware acceleration once the GUI was launched that required extensive debugging. The GUI conversion, however, is straightforward once the app is correctly compiled and launched, albeit requiring a manual entry of a single file at a time with no apparent batch processing available.
 
+The Aird file type was straightforward to convert on Windows via the executable available on Github (v6.0.0) but does not seem to be available for other operating systems, much like MZA and mzDB. Unfortunately the Python package designed to allow an interface to the file type has been deprecated and we were unable to install or use it in a meaningful way and were unable to reverse-engineer the file type sufficiently to compare it here. The UIMF file type from the Pacific Northwest National Lab (PNNL) provided documentation exclusively in the form of C# commands and did not supply instructions for file conversion, making it unclear what input formats were supported. The toffee format also provided zero documentation for conversion from other formats and was restricted to time-of-flight (TOF) data independent acquisition (DIA) MS data. Thus, we were unable to directly compare any of these three file types to the others.
+
 ### Universal lack of support for the six relevant queries
 
-[TODO: note the dependencies required by each of the mzML parsers (and mzapy/mz5?)]
+Despite the relative simplicity and relevance of our queries, none of the available mass spectrometry (MS) formats had existing functions or documented examples of all six queries. Unsurprisingly, the mzML file type had the most extensive coverage but documentation and prebuilt functionality was still disappointingly sparse. The pyteomics package provides four "combined examples" that focus on the spectrum visualization and annotation common to proteomics research but provide minimal guidance about chromatogram or retention time range extraction. pyteomics also provides native support for the mzMLb file type and was the only one of the three Python packages to do so, deserving praise for the minimal disruption that mzMLb files placed on existing pipelines if they were to switch from mzML to mzMLb. The pyopenms package provides similarly extensive documentation for proteomic and scan-based analysis but again lacks information about subsetting in the retention time direction, though the existence of an undocumented parser (`get2DPeakDataLong`) provides a simple way to do this for MS<sup>1</sup> data. Additionally, pyOpenMS required installing an old version of the package (3.0.0), Python itself (3.11) and the numpy package (<2.0) due to more recent builds requiring AVX support which was unavailable on our hardware. pymzml is intentionally a lightweight parser focused exclusively on reading mzML files but does not supply any functions for the queries other than scan extraction by number and the "Spectrum and Chromatogram" documentation module was empty at the time of writing (February 2025).
 
-Despite the relative simplicity and relevance of our queries, none of the available mass spectrometry (MS) formats had existing functions or documented examples of all six queries. Unsurprisingly, the mzML file type had the most extensive coverage but documentation and prebuilt functionality was still disappointingly sparse. The pyteomics package provides four "combined examples" that focus on the spectrum visualization and annotation common to proteomics research but provide minimal guidance about chromatogram or retention time range extraction. pyteomics also provides native support for the mzMLb file type and was the only one of the three Python packages to do so, deserving praise for the minimal disruption that mzMLb files placed on existing pipelines if they were to switch from mzML to mzMLb. The pyOpenMS package provides similarly extensive documentation for proteomic and scan-based analysis but again lacks information about subsetting in the retention time direction, though the existence of an undocumented parser (`get2DPeakDataLong`) provides a simple way to do this for MS1 data. Additionally, pyOpenMS required installing an old version of the package (3.0.0), Python itself (3.11) and the numpy package (<2.0) due to more recent builds requiring AVX support which was unavailable on our hardware. pymzml is intentionally a lightweight parser focused exclusively on reading mzML files but does not supply any functions for the queries other than scan extraction by number and the "Spectrum and Chromatogram" documentation module was empty at the time of writing.
-
-mz5's documentation was remarkably sparse, especially considering it was one of the earliest mzML formats and is supported by Proteowizard. Crucially, the original paper [@Wilhelm2012] contains links to a website (https://software.steenlab.org/mz5) which currently returns an HTTP error 500. A Python library (pymz5) exists but requires an old version of Python (2.7 or 3.2) and hasn't been updated in 12 years and is predominately a simple fork of h5py [@ref] with three mz5-specific commits on top. Most problematically, we were unable to determine how mz5 stores precursor *m/z* ratios, making the fragment and precursor searches impossible. This was largely due to the variable-length nested compound structures mz5 that are not supported in all APIs, e.g. Java (@Bhamber2020).
+mz5's documentation was remarkably sparse, especially considering it was one of the earliest mzML formats and is supported by Proteowizard. Crucially, the original paper [@Wilhelm2012] contains links to a website (https://software.steenlab.org/mz5) which currently returns an HTTP error 500. A Python library (pymz5) exists but requires an old version of Python (2.7 or 3.2) and hasn't been updated in 12 years and is predominately a simple fork of h5py [@ref] with three mz5-specific commits on top. Most problematically, we were unable to determine how mz5 stores precursor *m/z* ratios, making the fragment and precursor searches impossible. This was largely due to the variable-length nested compound structures mz5 that are not supported in all APIs, e.g. Java (@Bhamber2021).
 
 mzDB access was hamstrung by several issues, primarily the outdated repository that implies Python and R support via a port from Rust but was unavailable at the time of development, though we are grateful for the responsive developer who notified us that this implementation was not feature-complete. This required that we deduce the SQLite BLOB type compression format from scratch when writing a parser and spend extensive time reading through the documentation to determine how best to link the various tables provided in the mzDB file. Scan metadata in this file type is stored as raw XML strings, producing the worst of both worlds in requiring both SQLite knowledge in their extraction and XML processing to obtain the relevant information. Additionally, its failure to implement the clever bounding box and run slice scheme for MS/MS data negated with our ability to avoid parsing every MS/MS spectrum when performing precursor and fragment searches.
 
-MZA provides a complementary Python package, `mzapy`, for access to MZA files. Here again we ran into several issues with its installation and use stemming largely from the deployed package requiring TOF bins for parsing, though a separate Github branch provides a workaround and the rapid developer response was appreciated. The `mzapy` package provides a clear example of chromatogram extraction as well as a method for retention time range extraction, though there exists no clear function for the extraction of a single spectrum by scan number despite the internal file structure being highly optimized for this purpose. `mzapy` also provides good support for ion mobility extraction but fails to index MS2 information or provide any clear way to extract fragments by *m/z* or precursor.
+MZA provides a complementary Python package, `mzapy`, for access to MZA files. Here again we ran into several issues with its installation and use stemming largely from the deployed package requiring TOF bins for parsing, though a separate Github branch provides a workaround and the rapid developer response was appreciated. The `mzapy` package provides a clear example of chromatogram extraction as well as a method for retention time range extraction, though there exists no clear function for the extraction of a single spectrum by scan number despite the internal file structure being highly optimized for this purpose. `mzapy` also provides good support for ion mobility extraction but fails to index MS/MS information or provide any clear way to extract fragments by *m/z* or precursor.
 
-MZTree and mzMD provide a slightly strange interface to MS data, requiring a separate Java server to be launched that could then be queried via an API. For users without prior knowledge of HTTP request methods or exposure to programming APIs, the README is entirely unhelpful because it simply documents the API's endpoints and provides no complete query strings as examples to guide the user. This combination of GUI server and command-line HTTP request inverts the typical paradigm of GUI for exploration and command line for construction to unnecessarily complicated results. More problematically for this analysis, the API provides no apparent way to access MS/MS data or query the files by scan number, with only RT and *m/z* bounds controlling the subset of data extracted. Finally, the GUI provides no way to open multiple files simultaneously or iterate through files programmatically and instead requiring point-and-click interaction with the GUI each time a file is opened or closed, preventing us from making reasonable comparisons in tests requiring multiple files.
+MZTree and mzMD provide a slightly strange interface to MS data, requiring a separate Java server that is then be queried via an HTTP API. For users without prior knowledge of HTTP request methods or exposure to programming APIs, the README is entirely unhelpful because it simply documents the API's endpoints and provides no complete query strings as examples to guide the user. This combination of GUI server and command-line HTTP request inverts the typical paradigm of GUI for exploration and command line for construction to convoluted effect, though the structure of the data returned by the server is impressively simple. More problematically for this analysis, the API provides no apparent way to access MS/MS data or query the files by scan number, with only RT and *m/z* bounds controlling the subset of data extracted. Finally, the GUI provides no way to open multiple files simultaneously or iterate through files programmatically and instead requiring point-and-click interaction with the GUI each time a file is opened or closed, preventing us from making reasonable comparisons in tests requiring multiple files.
 
 ## SQL-based parsers were simple to write and use
 
 We then used custom code to convert the mzML files into SQLite and DuckDB databases using a simple schema for MS1 and MS2 data. The MS1 table consisted simply of fields for filename, scan index, retention time, *m/z* ratio, and intensity. The MS2 table consisted of the same fields except that the *m/z* column was separated into precursor and fragment *m/z*. Although we did not extend these databases to include the metadata associated with each file and scan, the logical framework could be easily extended in future work and the metadata typically represents a small fraction of the total space within the file, allowing us to make reasonable comparisons about file size between the databases and the metadata-rich other file types. We also converted each file's MS1 and MS2 table into Parquet representations for comparison using the same field/column schema.
 
-We found that the documentation for SQLite, DuckDB, and Parquet file formats in Python to far exceed the documentation available for any mzML parser. This is unsurprising given that these file formats are used widely outside of MS research and are developed and maintained by dedicated teams. Additionally, the use of a consistent SQL syntax for table creation and insertion meant that the same code could be used to write to both SQLite and DuckDB, as well as any other databases supported in Python. The use of packages such as SQLAlchemy could be used to additionally streamline this process to any additional database by simply swapping in a new database engine.
+We found that the documentation for SQLite, DuckDB, and Parquet file formats in Python far exceeded the documentation available for any mzML parser. This is unsurprising given that these file formats are used widely outside of MS research and are developed and maintained by dedicated teams. Additionally, the use of a consistent SQL syntax for table creation and insertion meant that the same code could be used to write to both SQLite and DuckDB, as well as any other databases supported in Python. The use of packages such as SQLAlchemy could be used to additionally streamline this process to any additional database by simply swapping in a new database engine.
 
-Querying the MS1 and MS2 tables was also very straightforward. After establishing a connection to the database, the six queries could be asked using nearly human-readable SQL syntax. Requesting the thousandth MS1 scan by number consisted simply of `SELECT * FROM MS1 WHERE id = 1000` passed along to the pandas.read_sql_query function. More complicated queries such as retention time range (`SELECT * FROM MS1 WHERE rt BETWEEN 6 AND 8`) and a precursor mass search (`SELECT * FROM MS2 WHERE premz BETWEEN 118.086 AND 118.087`) were similarly intuitive.
+Querying the MS1 and MS2 tables was also very straightforward. After establishing a connection to the database, the six queries could be asked using nearly human-readable SQL syntax. Requesting the thousandth MS1 scan by number consisted simply of `SELECT * FROM MS1 WHERE id = 1000` passed along to the `pandas.read_sql_query` function. More complicated queries such as retention time range (`SELECT * FROM MS1 WHERE rt BETWEEN 6 AND 8`) and a precursor mass search (`SELECT * FROM MS2 WHERE premz BETWEEN 118.086 AND 118.087`) were similarly intuitive.
 
 ## Time and space requirements for a single DDA file across formats
 
@@ -405,15 +393,72 @@ ggsave("figures/supp_dbloopjoinuni.png", width = 6.5, height=5)
 
 ## Database optimization via indices/ordering and multi-file constructions
 
-Databases also provide multiple ways to optimize queries.
+Databases also provide multiple ways to optimize queries. SQLite allows the construction of indices for a field within a table that then speeds up queries at the cost of additional disk space. Alternatively, DuckDB and Parquet files rely predominantly on the data order when it's written to disk and use their sophisticated row group methodology when subsetting.
+
+We found that SQLite queries benefitted significantly from the construction of an index on the *m/z* column when extracting chromatograms, improving lookup times by an order of magnitude (dropping from [0.3] seconds to [0.03 seconds], Figure XX). However, because the SQLite index is stored on disk alongside the data, this improvement also increased the file size by 33% from [150MB] to [210MB]. DuckDB also improved significantly with ordered data but to a smaller degree and surprisingly required additional space to do so, likely due to the reordering resulting in a different compression strategy (Figure XX). Parquet files had the smallest improvement upon data ordering but remained the same small size they were when unordered.
+
+Crucially, these improvements also persisted when multiple files were stored in a single database. We built databases consisting of between 1 and 100 individual MS files and tested the time required to extract ion chromatograms from each after an index was constructed (Figure XX, left panel). DuckDB was consistently the fastest ion chromatogram extraction method, with query times around 0.03 seconds for a single file and 1 second for one hundred files. SQLite had much higher variance and slower extraction times with datasets consisting of more than one file, typically an order of magnitude slower than DuckDB, while Parquet fell between the two. Importantly, only DuckDB had a slope significantly less than one. This is what would be expected if the database was performing a simple binary search on the index, with an expected time efficiency of O(log(# of files)). However, DuckDB's performance degrades at larger database sizes and approaches a 1:1 slope, possibly due to the overhead of reading large amounts of data into memory after it's found. We additionally compared these values to the timings obtained from converting each file into its own database and looping over each of those to confirm the linearity of that response (Figure XX, right panel). Interestingly, SQLite timings were slightly better with multiple database files (Figure XX, bottom panel) instead of one combined database.
 
 ```{r}
-read_csv("data/idx_ord_times.csv") %>%
+idx_gp <- read_csv("data/idx_ord_times.csv") %>%
+  mutate(file_size=ifelse(method=="Parquet", file_size-1, file_size)) %>%
   ggplot() +
-  geom_boxplot(aes(x=file_size/1e6, y=time, color=method)) +
-  scale_y_log10()
+  geom_boxplot(aes(x=file_size/1e6, y=time, color=method), position=position_identity(), width=10, fill="transparent") +
+  scale_y_log10() +
+  labs(x="Database size (MB)", y="Time (seconds)", color=NULL) +
+  theme_bw() +
+  theme(legend.position="inside", legend.justification.inside = c(0, 0),
+        legend.background = element_rect(color="black")) +
+  guides(color=guide_legend(nrow=2))
+
+
+multifile_data <- read_csv("data/multifile_times.csv") %>%
+  mutate(type=factor(type, levels=c("multifile", "singlefile"),
+                     labels=c("Single database", "One database per MS file"))) %>%
+  mutate(method=factor(method, levels=c("sqlite", "duckdb", "parquet"),
+                       labels=c("SQLite", "DuckDB", "Parquet"))) %>%
+  mutate(n_file_fact=factor(n_files, levels=c(1, 3, 10, 30, 100), 
+                        labels=c("One file", "3 files", "10 files", 
+                                "30 files", "100 files")))
+
+multifile_data %>%
+  select(method, n_files, time, type) %>%
+  mutate(n_files=log10(n_files), time=log10(time)) %>%
+  nest(data=c(n_files, time)) %>%
+  mutate(lmfit=map(data, ~broom::tidy(lm(.x$time~.x$n_files, offset = .x$n_files)))) %>%
+  unnest(lmfit) %>%
+  filter(term!="(Intercept)")
+
+xdb_gp <- multifile_data %>%
+  ggplot(aes(x=n_files, y=time, color=method, fill=method)) +
+  geom_abline(slope = 1, intercept = -5:3) +
+  geom_smooth(method="lm", formula=y~x, position=position_dodge(width=0.2), fill="grey50") +
+  geom_point(position=position_dodge(width=0.2), color="black", pch=21) +
+  facet_wrap(~type, nrow=1) +
+  scale_y_log10() +
+  scale_x_log10() +
+  # scale_color_manual(breaks = method_names, values=method_colors, aesthetics = c("color", "fill")) +
+  scale_color_viridis_d(aesthetics = c("color", "fill"), begin = 0.2, end = 0.8) +
+  labs(x="Number of files", y="Time (seconds)", color=NULL, fill=NULL) +
+  theme_bw() +
+  theme(legend.position="inside", legend.justification.inside = c(0.05, 0.95),
+        legend.background = element_rect(color="grey80"))
+
+xmeth_gp <- multifile_data %>%
+  ggplot() +
+  geom_boxplot(aes(x=n_file_fact, y=time, color=type)) +
+  facet_wrap(~method, nrow=1) +
+  scale_y_log10() +
+  scale_color_viridis_d(option = "A", begin = 0.4, end = 0.8) +
+  theme_bw() +
+  labs(x="Number of files", y="Time (seconds)", color="Database type") +
+  theme(legend.position="top")
+
+idx_gp + (xdb_gp/xmeth_gp + plot_layout(heights = c(2,1)))
+ggsave("figures/multifile_fig.png", width = 10.5, height=7)
 ```
 
+![](figures/multifile_fig.png)
 
 # Discussion
 
@@ -436,6 +481,7 @@ Querying things by scan number is dumb.
 3) Only USEFUL when you're parsing the entire file! Nobody knows what scan number 976 corresponds to, making extraction by number useless
 
 DuckDB's zonemaps operate similarly to mzDB's bounding boxes
+DuckDB also has automatic compression detection (e.g. the delta encoding of mz5)
 
 Unlikely that databases replace the original files so this is meant to be an auxiliary data structure **alongside** the .raw or .mzML files, not a substitute.
 
