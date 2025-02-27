@@ -96,11 +96,12 @@ cd ..
 E:
 cd mzsql\MTBLS10066
 
-msconvert *.raw --filter "peakPicking true 1-" --filter "polarity positive" 
-msconvert *.raw --mzMLb --filter "peakPicking true 1-" --filter "polarity positive" 
-msconvert *.raw --mz5 --filter "peakPicking true 1-" --filter "polarity positive"
-for %f in (*.raw) do "C:\Program Files\ProteoWizard\raw2mzDB_0.9.10_build20170802\raw2mzDB.exe" -i %f -c 1-2 --safeMode
-for %f in (*.mzML) do mza.exe -file %f
+# After adding msconvert, raw2mzdb, and mza executables to PATH:
+msconvert 20220921_LEAP-POS_BL01.raw --filter "peakPicking true 1-"
+msconvert 20220921_LEAP-POS_BL01.raw --mzMLb --filter "peakPicking true 1-"
+msconvert 20220921_LEAP-POS_BL01.raw --mz5 --filter "peakPicking true 1-"
+raw2mzDB -i 20220921_LEAP-POS_BL01.raw  -c 1-2 --safeMode
+mza -file 20220921_LEAP-POS_BL01.raw
 ```
 
 ## Database schema
