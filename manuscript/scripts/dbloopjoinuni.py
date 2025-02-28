@@ -6,6 +6,7 @@ import sqlite3
 import os
 import random
 import glob
+import timeit
 
 random.seed(123)
 basename=random.sample(glob.glob("E:/mzsql/MTBLS10066/*.mzML"), 1)[0].replace(".mzML", "").replace("\\", "/")
