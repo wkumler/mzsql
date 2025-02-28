@@ -58,7 +58,7 @@ We explored the available documentation on PyPI and Github for each mass spectro
 
 We browsed Metabolights [@Haug2019] for suitable LCMS datasets, looking for studies that included 100+ gigabytes of data from both full scan and MS/MS analysis. We were also restricted to the Thermo Scientific .raw file format, as it was the most widely supported by alternative MS storage methods. We also excluded polarity-switching data as it is unclear whether all converters would be able to separate scans based on polarity.
 
-Files were downloaded as .raw. mzML, mz5, and mzMLb were all natively supported by Proteowizard's `msconvert` software (version 3.0.25009) while MZA (v1.24.11.16) and mzDB (v0.9.10_build20170802) had separate extensions to this executable enabling their own conversion. MzTree and mzMD were converted via their GUI which did not have release or versioning information available but were downloaded from Github (https://github.com/optimusmoose/MZTree and https://github.com/yrm9837/mzMD-java, respectively) and built via Maven (v3.9.9) for Java (v21.0.6). SQL databases were built using Python 3.11.11 with SQLite (v3.48.0) via the Python sqlite3 package (v2.6.0), DuckDB via the duckdb package (v1.1.3), and Parquet files via the pyarrow package (v19.0.0). We were additionally able to download and install 
+Files were downloaded as .raw. mzML, mz5, and mzMLb were all natively supported by Proteowizard's `msconvert` software (version 3.0.25009) while MZA (v1.24.11.16) and mzDB (v0.9.10_build20170802) had separate extensions to this executable enabling their own conversion. MzTree and mzMD were converted via their GUI which did not have release or versioning information available but were downloaded from Github (https://github.com/optimusmoose/MZTree and https://github.com/yrm9837/mzMD-java, respectively) and built via Maven (v3.9.9) for Java (v21.0.6). SQL databases were built using Python 3.11.11 with SQLite (v3.48.0) via the Python sqlite3 package (v2.6.0), DuckDB via the duckdb package (v1.1.3), and Parquet files via the pyarrow package (v19.0.0). We were additionally able to download and install []
 
 mzML access was done with Python's pyteomics package (v4.7.5), the pymzml package (v2.5.10), and the pyopenms package (3.0.0.dev20230306). MZA files were accessed via the mzapy library (v1.8.dev4 from the no_full_mz_array branch on Github) and via custom code built around the h5py package (3.12.1). Custom parsers were required for mzDB, mz5, MzTree, and mzMD.
 
@@ -80,15 +80,14 @@ git clone https://github.com/optimusmoose/MZTree.git
 cd MZTree
 cd msDataServer
 C:\Users\willi\Documents\mzsql\java_things\apache-maven-3.9.9\bin\mvn package
-java -Dsun.java2d.d3d=false -Dsun.java2d.opengl=false -jar target\msDataServer-1.0.jar
+java -Dsun.java2d.d3d=false -Dsun.java2d.opengl=false -jar java_things\MZTree\msDataServer\target\msDataServer-1.0.jar
 (manually) open mztree file in port 4568
 
 git clone https://github.com/yrm9837/mzMD-java.git
 cd mzMD-java
 C:\Users\willi\Documents\mzsql\java_things\apache-maven-3.9.9\bin\mvn package
-java -Dsun.java2d.d3d=false -Dsun.java2d.opengl=false -jar target\msDataServer-1.0.jar
+java -Dsun.java2d.d3d=false -Dsun.java2d.opengl=false -jar java_things\mzMD-java\target\msDataServer-1.0.jar
 (manually) open mzmd file in port 4567
-cd ..
 
 
 
@@ -97,11 +96,12 @@ E:
 cd mzsql\MTBLS10066
 
 # After adding msconvert, raw2mzdb, and mza executables to PATH:
-msconvert 20220921_LEAP-POS_BL01.raw --filter "peakPicking true 1-"
-msconvert 20220921_LEAP-POS_BL01.raw --mzMLb --filter "peakPicking true 1-"
-msconvert 20220921_LEAP-POS_BL01.raw --mz5 --filter "peakPicking true 1-"
-raw2mzDB -i 20220921_LEAP-POS_BL01.raw  -c 1-2 --safeMode
-mza -file 20220921_LEAP-POS_BL01.raw
+msconvert 20220923_LEAP-POS_QC04.raw --filter "peakPicking true 1-"
+msconvert 20220923_LEAP-POS_QC04.raw --mzMLb --filter "peakPicking true 1-"
+msconvert 20220923_LEAP-POS_QC04.raw --mz5 --filter "peakPicking true 1-"
+# Needs full path or it crashes on startup?
+"C:\Program Files\ProteoWizard\raw2mzDB_0.9.10_build20170802\raw2mzDB.exe" -i 20220923_LEAP-POS_QC04.raw  -c 1-2 --safeMode
+mza -file 20220923_LEAP-POS_QC04.raw
 ```
 
 ## Database schema
