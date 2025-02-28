@@ -81,13 +81,14 @@ cd MZTree
 cd msDataServer
 C:\Users\willi\Documents\mzsql\java_things\apache-maven-3.9.9\bin\mvn package
 java -Dsun.java2d.d3d=false -Dsun.java2d.opengl=false -jar java_things\MZTree\msDataServer\target\msDataServer-1.0.jar
-(manually) open mztree file in port 4568
+(manually) open mztree file in port 4568 (20220923_LEAP-POS_QC04.mzTree)
+
 
 git clone https://github.com/yrm9837/mzMD-java.git
 cd mzMD-java
 C:\Users\willi\Documents\mzsql\java_things\apache-maven-3.9.9\bin\mvn package
 java -Dsun.java2d.d3d=false -Dsun.java2d.opengl=false -jar java_things\mzMD-java\target\msDataServer-1.0.jar
-(manually) open mzmd file in port 4567
+(manually) open mzmd file in port 4567 (20220923_LEAP-POS_QC04.mzMD)
 
 
 
