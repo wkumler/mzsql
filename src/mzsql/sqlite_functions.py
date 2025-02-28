@@ -9,13 +9,16 @@ def turn_mzml_sqlite(files, outfile, ordered=None):
     conn.execute("DROP TABLE IF EXISTS MS1")
     conn.execute("DROP TABLE IF EXISTS MS2")
     if isinstance(files, str):
-        for spectrum in pyteomics.mzml.MzML(files):
+        files = [files]
+    for file in files:
+        for spectrum in pyteomics.mzml.MzML(file):
             if spectrum['ms level'] == 1:
                 idx = int(spectrum['id'].split("scan=")[-1].split()[0])
                 mz_vals = spectrum['m/z array']
                 int_vals = spectrum['intensity array']
                 rt_val = spectrum['scanList']['scan'][0]['scan start time']
-                df_scan = pd.DataFrame({'id': idx, 'mz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
+                df_scan = pd.DataFrame({'filename': os.path.basename(file), 'id': idx, 'mz': mz_vals, 
+                                        'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
                 df_scan.to_sql("MS1", conn, if_exists="append", index=False)
             if spectrum['ms level'] == 2:
                 idx = int(spectrum['id'].split("scan=")[-1].split()[0])
@@ -23,31 +26,9 @@ def turn_mzml_sqlite(files, outfile, ordered=None):
                 int_vals = spectrum['intensity array']
                 rt_val = spectrum['scanList']['scan'][0]['scan start time']
                 premz_val = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window target m/z']
-                df_scan = pd.DataFrame({'id': idx, 'premz': premz_val, 'fragmz': mz_vals, 
-                                        'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
+                df_scan = pd.DataFrame({'filename': os.path.basename(file), 'id': idx, 'premz': premz_val, 
+                                        'fragmz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
                 df_scan.to_sql("MS2", conn, if_exists="append", index=False)
-    else:
-        for file in files:
-            if not os.path.exists(file):
-                raise FileNotFoundError(f"Input mzML file '{file}' does not exist.")
-            for spectrum in pyteomics.mzml.MzML(file):
-                if spectrum['ms level'] == 1:
-                    idx = int(spectrum['id'].split("scan=")[-1].split()[0])
-                    mz_vals = spectrum['m/z array']
-                    int_vals = spectrum['intensity array']
-                    rt_val = spectrum['scanList']['scan'][0]['scan start time']
-                    df_scan = pd.DataFrame({'filename': os.path.basename(file), 'id': idx, 'mz': mz_vals, 
-                                            'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
-                    df_scan.to_sql("MS1", conn, if_exists="append", index=False)
-                if spectrum['ms level'] == 2:
-                    idx = int(spectrum['id'].split("scan=")[-1].split()[0])
-                    mz_vals = spectrum['m/z array']
-                    int_vals = spectrum['intensity array']
-                    rt_val = spectrum['scanList']['scan'][0]['scan start time']
-                    premz_val = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window target m/z']
-                    df_scan = pd.DataFrame({'filename': os.path.basename(file), 'id': idx, 'premz': premz_val, 
-                                            'fragmz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
-                    df_scan.to_sql("MS2", conn, if_exists="append", index=False)
     
     if ordered is not None:
         index_name = f"idx_{ordered}"
