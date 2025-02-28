@@ -11,6 +11,8 @@ def turn_mzml_sqlite(files, outfile, ordered=None):
     if isinstance(files, str):
         files = [files]
     for file in files:
+		MS1_dfs = []
+		MS2_dfs = []
         for spectrum in pyteomics.mzml.MzML(file):
             if spectrum['ms level'] == 1:
                 idx = int(spectrum['id'].split("scan=")[-1].split()[0])
@@ -19,7 +21,7 @@ def turn_mzml_sqlite(files, outfile, ordered=None):
                 rt_val = spectrum['scanList']['scan'][0]['scan start time']
                 df_scan = pd.DataFrame({'filename': os.path.basename(file), 'id': idx, 'mz': mz_vals, 
                                         'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
-                df_scan.to_sql("MS1", conn, if_exists="append", index=False)
+                MS1_dfs.append(df_scan)
             if spectrum['ms level'] == 2:
                 idx = int(spectrum['id'].split("scan=")[-1].split()[0])
                 mz_vals = spectrum['m/z array']
@@ -28,8 +30,9 @@ def turn_mzml_sqlite(files, outfile, ordered=None):
                 premz_val = spectrum['precursorList']['precursor'][0]['isolationWindow']['isolation window target m/z']
                 df_scan = pd.DataFrame({'filename': os.path.basename(file), 'id': idx, 'premz': premz_val, 
                                         'fragmz': mz_vals, 'int': int_vals, 'rt': [rt_val] * len(mz_vals)})
-                df_scan.to_sql("MS2", conn, if_exists="append", index=False)
-    
+                MS2_dfs.append(df_scan)
+		pd.concat(MS1_dfs, ignore_index=True).to_sql("MS1", conn, if_exists="append", index=False)
+		pd.concat(MS2_dfs, ignore_index=True).to_sql("MS2", conn, if_exists="append", index=False)
     if ordered is not None:
         index_name = f"idx_{ordered}"
         if ordered == "rt":
