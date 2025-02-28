@@ -10,4 +10,3 @@ from .mza_functions import *
 from .mzTree_functions import *
 from .mzMD_functions import *
 from .mzdb_functions import *
-from .timing_functions import *
