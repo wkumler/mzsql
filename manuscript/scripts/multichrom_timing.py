@@ -6,6 +6,7 @@ import sqlite3
 import os
 import random
 import glob
+import timeit
 
 random.seed(123)
 basename=random.sample(glob.glob("E:/mzsql/MTBLS10066/*.mzML"), 1)[0].replace(".mzML", "").replace("\\", "/")
@@ -82,7 +83,7 @@ def get_multichrom_mzml_pyopenms(file, mzs, ppm):
                     df_scan = pd.DataFrame({'mz_i':mz_i, 'mz':mz_vals[bet_idxs], 'int':int_vals[bet_idxs], 'rt':[rt_val]*sum(bet_idxs)})
                     scan_dfs.append(df_scan)
     return(pd.concat(scan_dfs, ignore_index=True))
-def get_multichrom_mzml_pyopenms_2Dpeak(file, mzs, ppm):
+def get_multichrom_mzml_pyopenms_2DPeak(file, mzs, ppm):
     exp = pyopenms.MSExperiment()
     pyopenms.MzMLFile().load(file, exp)
     exp.updateRanges()
@@ -170,7 +171,7 @@ def get_multichrom_mzdb(file, mzs, ppm):
 def get_multichrom_mztree(url_port, mzs, ppm):
     all_chroms = []
     for mz_i in mzs:
-        mz_min, mz_max = pmppm(mz, ppm)
+        mz_min, mz_max = pmppm(mz_i, ppm)
         request_string = f"{url_port}/api/v2/getpoints?mzmin={mz_min}&mzmax={mz_max}&rtmin=0&rtmax=1000000&numpoints=0"
         response = requests.get(request_string)
         chrom_data = pd.DataFrame(response.json(), columns=["pointId", "traceId", "mz", "rt", "intensity"])
@@ -178,10 +179,10 @@ def get_multichrom_mztree(url_port, mzs, ppm):
         chrom_data.columns = ["rt", "mz", "int"]
         all_chroms.append(chrom_data)
     return(pd.concat(all_chroms, ignore_index=True))
-def get_multichrom_mzmd(url_port, mzs, ppm):
+def get_multichrom_mzMD(url_port, mzs, ppm):
     all_chroms = []
     for mz_i in mzs:
-        mz_min, mz_max = pmppm(mz, ppm)
+        mz_min, mz_max = pmppm(mz_i, ppm)
         request_string = f"{url_port}/api/v2/getpoints?mzmin={mz_min}&mzmax={mz_max}&rtmin=0&rtmax=1000000&n=0&m=0"
         response = requests.get(request_string)
         chrom_data = pd.DataFrame(response.json(), columns=["pointId", "traceId", "mz", "rt", "intensity"])
@@ -232,16 +233,16 @@ function_list = [
     ("mz5", "mz5", ".mz5"),
     ("MZTree", "mztree", "http://127.0.0.1:4568"),
     ("mzMD", "mzMD", "http://127.0.0.1:4567"),
-    ("SQLite", "sqlite", ".sqlite"),
-    ("DuckDB", "duckdb", ".duckdb"),
-    ("Parquet", "parquet", "_pqds")
+    ("SQLite", "sqlite_loop", ".sqlite"),
+    ("DuckDB", "duckdb_loop", ".duckdb"),
+    ("Parquet", "parquet_loop", "_pqds")
 ]
 
 init_df = pd.DataFrame(columns=["n_chroms", "method", "time"])
 init_df.to_csv('data/multichrom_times.csv', index=False)
 
-def time_multichrom(fun_suffix, file_ending, mz_list):
-    if fun_suffix in ["mztree", "mzmd"]:
+def time_multichrom(fun_suffix, file_ending, mz_list, verbose=True):
+    if fun_suffix in ["mztree", "mzMD"]:
         rep_function = f"get_multichrom_{fun_suffix}('{file_ending}', {mz_list}, 5)"
     else:
         rep_function = f"get_multichrom_{fun_suffix}('{basename}{file_ending}', {mz_list}, 5)"
