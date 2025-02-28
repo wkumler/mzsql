@@ -10,11 +10,11 @@ import pyarrow.dataset as ds
 import os
 
 def turn_mzml_parquet(files, outdir, ordered=None):
-    MS1_dfs = []
-    MS2_dfs = []
     if isinstance(files, str):
         files = [files]
     for file in files:
+        MS1_dfs = []
+        MS2_dfs = []
         for spectrum in pyteomics.mzml.MzML(file):
             idx = int(spectrum['id'].split("scan=")[-1].split()[0])
             mz_vals = spectrum['m/z array']
