@@ -162,6 +162,7 @@ def get_chrom_mzml_pyopenms_2DPeak(file, mz, ppm):
 def get_spec_mzml_pyopenms(file, scan_num):
     exp = pyopenms.MSExperiment()
     pyopenms.MzMLFile().load(file, exp)
+    i = 0
     while i <= exp.size():
         if(int(exp[i].getNativeID().split("scan=")[-1].split()[0]) == scan_num):
             spec_data = exp[i].get_peaks()
