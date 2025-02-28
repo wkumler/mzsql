@@ -1,19 +1,23 @@
+
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from mzsql import *
 import sqlite3
 import os
 import random
+import glob
+
+random.seed(123)
+basename=random.sample(glob.glob("E:/mzsql/MTBLS10066/*.mzML"), 1)[0].replace(".mzML", "").replace("\\", "/")
+print(basename)
 
 # Create databases from mzML files if they don't already exist
-if(not(os.path.exists("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.sqlite"))):
-    turn_mzml_sqlite("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", "E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.sqlite")
-    turn_mzml_duckdb("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", "E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.duckdb")
-    turn_mzml_parquet("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.mzML", "E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04_pqds")
+if(not(os.path.exists(f"{basename}.sqlite"))):
+    turn_mzml_sqlite(f"{basename}.mzML", f"{basename}.sqlite")
+    turn_mzml_duckdb(f"{basename}.mzML", f"{basename}.duckdb")
+    turn_mzml_parquet(f"{basename}.mzML", f"{basename}_pqds")
 
-conn = sqlite3.connect("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.sqlite")
+conn = sqlite3.connect(f"{basename}.sqlite")
 top_int_df = pd.read_sql_query("SELECT * FROM MS1 ORDER BY int DESC LIMIT 30000", conn)
 top_masses = []
 top_rts = []
@@ -23,6 +27,7 @@ for i in range(100):
     top_masses.append(top_mz)
     mzmin, mzmax = pmppm(top_mz, 10)
     top_int_df = top_int_df[((top_int_df["mz"]<mzmin) | (top_int_df["mz"]>mzmax))]
+conn.close()
 
 def get_multichrom_mzml_pyteomics(file, mzs, ppm):
     file_data = pyteomics.mzml.MzML(file)
@@ -162,6 +167,28 @@ def get_multichrom_mzdb(file, mzs, ppm):
     connection.close()
     
     return(pd.concat(all_chroms, ignore_index=True))
+def get_multichrom_mztree(url_port, mzs, ppm):
+    all_chroms = []
+    for mz_i in mzs:
+        mz_min, mz_max = pmppm(mz, ppm)
+        request_string = f"{url_port}/api/v2/getpoints?mzmin={mz_min}&mzmax={mz_max}&rtmin=0&rtmax=1000000&numpoints=0"
+        response = requests.get(request_string)
+        chrom_data = pd.DataFrame(response.json(), columns=["pointId", "traceId", "mz", "rt", "intensity"])
+        chrom_data = chrom_data[["rt", "mz", "intensity"]].sort_values(by="rt")
+        chrom_data.columns = ["rt", "mz", "int"]
+        all_chroms.append(chrom_data)
+    return(pd.concat(all_chroms, ignore_index=True))
+def get_multichrom_mzmd(url_port, mzs, ppm):
+    all_chroms = []
+    for mz_i in mzs:
+        mz_min, mz_max = pmppm(mz, ppm)
+        request_string = f"{url_port}/api/v2/getpoints?mzmin={mz_min}&mzmax={mz_max}&rtmin=0&rtmax=1000000&n=0&m=0"
+        response = requests.get(request_string)
+        chrom_data = pd.DataFrame(response.json(), columns=["pointId", "traceId", "mz", "rt", "intensity"])
+        chrom_data = chrom_data[["rt", "mz", "intensity"]].sort_values(by="rt")
+        chrom_data.columns = ["rt", "mz", "int"]
+        all_chroms.append(chrom_data)
+    return(pd.concat(all_chroms, ignore_index=True))
 def get_multichrom_duckdb_loop(file, mzs, ppm):
     conn = duckdb.connect(file)
     all_chroms = []
@@ -197,29 +224,28 @@ def get_multichrom_parquet_loop(pqds_dir, mzs, ppm):
 function_list = [
     ("pyteomics", "mzml_pyteomics", ".mzML"),
     ("pyopenms", "mzml_pyopenms", ".mzML"),
-    ("pyopenms_2DPeak", "mzml_pyopenms_2Dpeak", ".mzML"),
+    ("pyopenms_2DPeak", "mzml_pyopenms_2DPeak", ".mzML"),
     ("pymzml", "mzml_pymzml", ".mzML"),
     ("mzMLb", "mzmlb", ".mzMLb"),
     ("mzDB", "mzdb", ".raw.mzDB"),
     ("MZA", "mza", ".mza"),
     ("mz5", "mz5", ".mz5"),
-    ("SQLite", "sqlite_loop", ".sqlite"),
-    ("DuckDB", "duckdb_loop", ".duckdb"),
-    ("Parquet", "parquet_loop", "_pqds")
+    ("MZTree", "mztree", "http://127.0.0.1:4568"),
+    ("mzMD", "mzMD", "http://127.0.0.1:4567"),
+    ("SQLite", "sqlite", ".sqlite"),
+    ("DuckDB", "duckdb", ".duckdb"),
+    ("Parquet", "parquet", "_pqds")
 ]
 
 init_df = pd.DataFrame(columns=["n_chroms", "method", "time"])
 init_df.to_csv('data/multichrom_times.csv', index=False)
 
-def time_multichrom(fun_suffix, file_ending, mz_list, verbose=True):
-    if(verbose):
-        start_time = time.time()
-        print(f"Running {fun_suffix}", end="\r")
-    rep_function = f"get_multichrom_{fun_suffix}('E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04{file_ending}', {mz_list}, 5)"
+def time_multichrom(fun_suffix, file_ending, mz_list):
+    if fun_suffix in ["mztree", "mzmd"]:
+        rep_function = f"get_multichrom_{fun_suffix}('{file_ending}', {mz_list}, 5)"
+    else:
+        rep_function = f"get_multichrom_{fun_suffix}('{basename}{file_ending}', {mz_list}, 5)"
     time_vals = timeit.repeat(rep_function, globals=globals(), number=1, repeat=3)
-    if(verbose):
-        elapsed = time.time() - start_time
-        print(f"Running {fun_suffix}... ({elapsed:.2f}s)")
     return(time_vals)
 
 random.seed(123)

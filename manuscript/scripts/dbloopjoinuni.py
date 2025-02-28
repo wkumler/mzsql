@@ -1,23 +1,22 @@
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from mzsql import *
 import sqlite3
 import os
 import random
+import glob
 
 random.seed(123)
-files = ["E:/mzsql/MTBLS10066/"+f for f in os.listdir("E:/mzsql/MTBLS10066/") if f.endswith(".mzML")]
-msfiles = random.sample(files, 10)
+basename=random.sample(glob.glob("E:/mzsql/MTBLS10066/*.mzML"), 1)[0].replace(".mzML", "").replace("\\", "/")
+print(basename)
 
-if(not(os.path.exists("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.sqlite"))):
-    turn_mzml_duckdb(msfiles[0], "E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.duckdb")
-    turn_mzml_sqlite(msfiles[0], "E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.sqlite")
-    turn_mzml_parquet(msfiles[0], "E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.parquet")
+if(not(os.path.exists(f"{basename}.sqlite"))):
+    turn_mzml_sqlite(f"{basename}.mzML", f"{basename}.sqlite")
+    turn_mzml_duckdb(f"{basename}.mzML", f"{basename}.duckdb")
+    turn_mzml_parquet(f"{basename}.mzML", f"{basename}_pqds")
 
-conn = sqlite3.connect("E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04.sqlite")
+conn = sqlite3.connect(f"{basename}.sqlite")
 top_int_df = pd.read_sql_query("SELECT * FROM MS1 ORDER BY int DESC LIMIT 30000", conn)
 top_masses = []
 top_rts = []
@@ -27,6 +26,7 @@ for i in range(100):
     top_masses.append(top_mz)
     mzmin, mzmax = pmppm(top_mz, 10)
     top_int_df = top_int_df[((top_int_df["mz"]<mzmin) | (top_int_df["mz"]>mzmax))]
+conn.close()
 
 def get_multichrom_duckdb_loop(file, mzs, ppm):
     conn = duckdb.connect(file)
@@ -156,7 +156,7 @@ for n_chroms in [1, 3, 10, 30, 100]:
     print(n_chroms)
     mz_list = random.sample(top_masses, n_chroms)
     for fun_i, file_ending in function_list:
-        rep_function = f"{fun_i}('E:/mzsql/MTBLS10066/20220923_LEAP-POS_QC04{file_ending}', {mz_list}, 5)"
+        rep_function = f"{fun_i}('{basename}{file_ending}', {mz_list}, 5)"
         time_vals = timeit.repeat(rep_function, globals=globals(), number=1, repeat=10)
         fun_name = fun_i.replace("get_multichrom_", "")
         time_df = pd.DataFrame({"n_chroms":n_chroms, "method":fun_name, "time":time_vals})
