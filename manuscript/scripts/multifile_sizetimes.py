@@ -29,12 +29,12 @@ for n_files in file_sequence:
                         output_db = mzml_i.replace(".mzML", file_ending)
                         print(output_db)
                         combined_cmd = f"turn_mzml_{db_name}(mzml_i, output_db, ordered=ordering)"
-                        eval(combined_cmd)
+                        #eval(combined_cmd)
                 else:
                     output_db = f"E:/mzsql/MTBLS10066/consolidated_{n_files}{file_ending}"
                     print(output_db)
                     combined_cmd = f"turn_mzml_{db_name}(this_multifile_subset, output_db, ordered=ordering)"
-                    eval(combined_cmd)
+                    #eval(combined_cmd)
 
 conn = sqlite3.connect(f"E:/mzsql/MTBLS10066/consolidated_{max(file_sequence)}.sqlite")
 top_int_df = pd.read_sql_query("SELECT * FROM MS1 ORDER BY int DESC LIMIT 30000", conn)
@@ -105,5 +105,5 @@ for n_files in file_sequence:
 
 all_timings = pd.concat(multifile_timings, ignore_index=True)
 all_sizes = pd.concat(file_sizes, ignore_index=True)
-all_sizes.merge(all_timings).to_csv("../data/multifile_timings.csv", index=False)
+all_sizes.merge(all_timings).to_csv("data/multifile_timings.csv", index=False)
 
