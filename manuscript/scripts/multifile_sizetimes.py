@@ -61,13 +61,15 @@ for mz_i in top_masses:
                 for db_type in ["consolidated", "multifile"]:
                     this_multifile_subset = multifile_subset[:n_files]
                     if db_type == "multifile":
+                        multifile_time = 0
                         for mzml_i in this_multifile_subset:
                             output_db = mzml_i.replace(".mzML", file_ending)
                             rep_function = f"get_chrom_{db_name}('{output_db}', {mz_i}, 5)"
                             time_vals = timeit.repeat(rep_function, globals=globals(), number=1, repeat=1)
-                            time_data = pd.DataFrame({"method":db_name, "mz_target":mz_i, "n_files":n_files, 
-                                                      "type":db_type, "db_sort":db_sort, "time":time_vals})
-                            multifile_timings.append(time_data)
+                            multifile_time+=time_vals[0]
+                        time_data = pd.DataFrame({"method":db_name, "mz_target":mz_i, "n_files":n_files,
+                                                  "type":db_type, "db_sort":db_sort, "time":time_vals})
+                        multifile_timings.append(time_data)
                     else:
                         output_db = f"E:/mzsql/MTBLS10066/consolidated_{n_files}{file_ending}"
                         rep_function = f"get_chrom_{db_name}('{output_db}', {mz_i}, 5)"
