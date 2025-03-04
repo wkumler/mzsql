@@ -107,25 +107,121 @@ mza -file 20220923_LEAP-POS_QC04.raw
 
 ## Database schema
 
-This “vanilla” database deprioritizes the metadata associated with a given file and focuses on performance and simplicity. Thus, this method does not replace the existing vendor-specific or mzML files but instead constructs a parallel data structure and represents our intuition that metadata is rarely the main target of MS analysis and that labs typically preserve the original files anyway.
+The “vanilla” database style proposed here abandons a 1:1 representation of the original vendor-specific file. This decision was made after discussion with a wide variety of experts, all of whom preserved the original MS files even after conversion to another file type, indicating that a highly-performant addition is more important than direct replacement. Here, we map MS concepts (retention time, *m/z*, intensity, etc.) directly to database fields to make downstream processing as intuitive as possible. Metadata is stored separately in `file_info` and `scan_info` tables that are linked by filename and scan number (Figure XX). We do not force compression of any of these fields because we believe that decoding compressed data is both a slow and unintuitive step, though automatic compression is supplied by the DuckDB and Parquet file types.
 
-Discuss how metadata fits into these parsers
+```{r gtables for figure 1}
+library(gt)
+data.frame(
+  filename=c("Smp_A", "Smp_B", "Smp_Y", "Smp_Z"),
+  n_scans=c(1445, 1489, 1388, 1390),
+  timestamp=c("2021-08-23 04:30", "2021-08-23 05:25", "2021-08-23 22:15", "2021-08-23 23:10"),
+  `etc.`=c("...", "...", "...", "...")
+) %>%
+  gt() %>%
+  cols_label(filename=html("filename</br><small>Source file</small>"),
+             n_scans=html("n_scans</br><small>Scan count</small>"),
+             timestamp=html("timestamp</br><small>Timestamp</small>"),
+             `etc.`=html("Etc.</br><small>...</small>")) %>%
+  tab_row_group(label = "...additional samples...", rows = !c(TRUE, TRUE, FALSE, FALSE)) %>%
+  tab_row_group(label = "", rows = c(TRUE, TRUE, FALSE, FALSE)) %>%
+  tab_style(style = cell_text(align = "center"), locations = cells_row_groups()) %>%
+  opt_table_outline() %>%
+  tab_style(cell_borders(sides = c("left", "right")), locations = cells_body()) %>%
+  cols_align(align = "center") %>%
+  cols_move_to_start("filename") %>%
+  tab_options(row_group.padding = 3) %>%
+  tab_header(title = "Table: file_info") %>%
+  tab_style(style = cell_text(align = "left"), locations = cells_title()) %>%
+  gtsave(filename = "figures/fileinfo_table.png", vwidth=1000)
 
-Discuss links between various tables via scan_idx column?
+data.frame(
+  filename=c("Smp_A", "Smp_A", "Smp_Z", "Smp_Z"),
+  scan_num=c(1, 2, 1389, 1390),
+  ms_level=c(1, 2, 2, 2),
+  rt=c(0.10, 0.12, 22.43, 22.45),
+  # min_mz=c(59.99975, 49.99992, 50.00013, 49.99978),
+  TIC=c(2331809, 820427, 9555703, 1892338),
+  `etc.`=c("...", "...", "...", "...")
+) %>%
+  gt() %>%
+  cols_label(filename=html("filename</br><small>Source file</small>"),
+             scan_num=html("scan_num</br><small>Scan number</small>"),
+             ms_level=html("ms_level</br><small>MS level</small>"),
+             rt=html("rt</br><small>Retention time</small>"), 
+             # min_mz=html("min_mz</br><small>Lowest <emph>m/z</emph></small>"),
+             TIC=html("TIC</br><small>Ion current</small>"),
+             `etc.`=html("Etc.</br><small>...</small>")) %>%
+  tab_row_group(label = "...many additional scans...", rows = !c(TRUE, TRUE, FALSE, FALSE)) %>%
+  tab_row_group(label = "", rows = c(TRUE, TRUE, FALSE, FALSE)) %>%
+  tab_style(style = cell_text(align = "center"), locations = cells_row_groups()) %>%
+  opt_table_outline() %>%
+  tab_style(cell_borders(sides = c("left", "right")), locations = cells_body()) %>%
+  cols_align(align = "center") %>%
+  cols_move_to_start("filename") %>%
+  tab_options(row_group.padding = 3) %>%
+  tab_header(title = "Table: scan_info") %>%
+  tab_style(style = cell_text(align = "left"), locations = cells_title()) %>%
+  gtsave(filename = "figures/scaninfo_table.png", vwidth=1000)
 
-$MS1
 
-$MS2
+data.frame(
+  filename=c("Smp_A", "Smp_A", "Smp_Z", "Smp_Z"),
+  scan_num=c(1,1,1385,1385),
+  rt=c(0.10, 0.10, 22.35, 22.35),
+  mz=c(60.0452, 60.0532, 60.0456, 60.0531),
+  int=c(6618, 2657, 158084, 4673)
+) %>%
+  gt() %>%
+  cols_label(filename=html("filename</br><small>Source file</small>"),
+             scan_num=html("scan_num</br><small>Scan number</small>"),
+             rt=html("rt</br><small>Retention time</small>"), 
+             mz=html("mz</br><small><emph>m/z</emph> ratio</small>"), 
+             int=html("int</br><small>Intensity</small>")) %>%
+  tab_row_group(label = "...millions of additional entries...", rows = rt>=mean(rt)) %>%
+  tab_row_group(label = "", rows = rt<=mean(rt)) %>%
+  tab_style(style = cell_text(align = "center"), locations = cells_row_groups()) %>%
+  opt_table_outline() %>%
+  tab_style(cell_borders(sides = c("left", "right")), locations = cells_body()) %>%
+  cols_align(align = "center") %>%
+  cols_move_to_start("filename") %>%
+  tab_options(row_group.padding = 3) %>%
+  tab_header(title = "Table: MS1") %>%
+  tab_style(style = cell_text(align = "left"), locations = cells_title()) %>%
+  gtsave(filename = "figures/ms1_table.png", vwidth=1000)
 
-$scan_info
+data.frame(
+  filename=c("Smp_A", "Smp_A", "Smp_Z", "Smp_Z"),
+  scan_num=c(2,2,1390,1390),
+  prescan=c(1,1,1385,1385),
+  ms2_rt=c(0.12, 0.12, 22.45, 22.45),
+  fragmz=c(51.0238, 53.0394, 52.0186, 57.0923),
+  premz=c(241.0894, 241.0894, 185.1932, 185.1932),
+  ms2_int=c(36104, 243165, 28371, 129604)
+) %>%
+  gt() %>%
+  cols_label(filename=html("filename</br><small>Source file</small>"),
+             scan_num=html("scan_num</br><small>Scan number</small>"),
+             prescan=html("prescan</br><small>Precursor scan</small>"),
+             ms2_rt=html("rt</br><small>Retention time</small>"), 
+             fragmz=html("fragmz</br><small>Fragment <emph>m/z</emph></small>"), 
+             premz=html("premz</br><small>Precursor <emph>m/z</emph></small>"), 
+             ms2_int=html("int</br><small>Intensity</small>")) %>%
+  tab_row_group(label = "...millions of additional entries...", rows = ms2_rt>=mean(ms2_rt)) %>%
+  tab_row_group(label = "", rows = ms2_rt<=mean(ms2_rt)) %>%
+  tab_style(style = cell_text(align = "center"), locations = cells_row_groups()) %>%
+  opt_table_outline() %>%
+  tab_style(cell_borders(sides = c("left", "right")), locations = cells_body()) %>%
+  cols_align(align = "center") %>%
+  cols_move_to_start("filename") %>%
+  tab_options(row_group.padding = 3) %>%
+  tab_header(title = "Table: MS2") %>%
+  tab_style(style = cell_text(align = "left"), locations = cells_title()) %>%
+  gtsave(filename = "figures/ms2_table.png", vwidth=1000)
+```
 
-$file_info
+![](figures/db_fig.png)
 
-$sample_metadata
-
-$rt_correction
-
-$picked_peaks
+*Figure XX: Database schema for an example MS/MS dataset showing the organization of mass-spectrometry data into tables. Fields of interest are easily queryable with simple SQL commands as shown in the table at bottom.*
 
 ## Time and space testing
 
@@ -136,7 +232,7 @@ Via %timeit% (need to redo these with randomization)
 
 # Results
 
-We settled on a large dataset of gut microbiota LCMS files published in @Portlock2025 and available on Metabolights under accession number MTBLS10066.
+We settled on a large dataset of gut microbiota LC-MS files published in @Portlock2025 and available on Metabolights under accession number MTBLS10066.
 
 ## All existing MS data formats demand a high level of domain knowledge
 
@@ -273,7 +369,7 @@ ggsave("figures/supp_preload_fig.png", width = 6.5, height=5)
 
 ### Spectrum extraction
 
-The simplest and most abundantly documented query was the extraction of asingle spectrum. In many ways, this is the fundamental unit of mass spectrometry and thus many formats are highly optimized for its extraction into manipulatable data (Figure 1, leftmost panels). Here, we found that the mzML and mzMLb file types were consistently the slowest to parse the mzML file type and required multiple seconds, likely highlighting inefficiencies in the `pyteomics` package used to parse both file types. `pyopenms` also struggled to open and extract a specific scan, requiring several seconds due in large part to the expensive initiation function, after which requests were orders of magnitude faster (Supplemental Figure XX). It is also worth noting that while both of these packages provided rapid extraction of a *random* spectrum, a significant overhead was introduced by needing to scan through the file to find a *specific* spectrum by scan number as scans are not always consecutive (e.g. during multiple MS experiments, polarity-switching runs, or when scans have been filtered out during conversion) and no metadata was obviously available that would have allowed using the index directly to a specific scan.
+The simplest and most abundantly documented query was the extraction of a single spectrum. In many ways, this is the fundamental unit of mass spectrometry and thus many formats are highly optimized for its extraction into manipulatable data (Figure 1, leftmost panels). Here, we found that the mzML and mzMLb file types were consistently the slowest to parse the mzML file type and required multiple seconds, likely highlighting inefficiencies in the `pyteomics` package used to parse both file types. `pyopenms` also struggled to open and extract a specific scan, requiring several seconds due in large part to the expensive initiation function, after which requests were orders of magnitude faster (Supplemental Figure XX). It is also worth noting that while both of these packages provided rapid extraction of a *random* spectrum, a significant overhead was introduced by needing to scan through the file to find a *specific* spectrum by scan number as scans are not always consecutive (e.g. during multiple MS experiments, polarity-switching runs, or when scans have been filtered out during conversion) and no metadata was obviously available that would have allowed using the index directly to a specific scan.
 
 The `pymzml` package was able to extract both MS1 and MS2 spectra from the mzML file nearly two orders of magnitude faster than the other mzML parsers, largely due to its use of naming the scans by their number and thus avoiding the expensive scan number extraction step. mzDB had the only notable difference between MS1 and MS2 scans, performing slightly better than `pyteomics` and `pyopenms` methods for MS1 data and significantly better for MS2 data, placing it approximately on par with `pymzml` in taking about a tenth of a second. The simple database methods (SQLite, DuckDB, and Parquet) also fell in this ~0.1 second range, with SQLite performing most poorly and DuckDB ~10x faster. Finally, both mz5 and MZA were an additional order of magnitude faster than any other method, returning the data within the spectrum in thousandths of a second. This shows the power of the HDF5 file system for data access when its location within the file is known in advance.
 
@@ -399,65 +495,32 @@ Databases also provide multiple ways to optimize queries. SQLite allows the cons
 
 We found that SQLite queries benefitted significantly from the construction of an index on the *m/z* column when extracting chromatograms, improving lookup times by an order of magnitude (dropping from [0.3] seconds to [0.03 seconds], Figure XX). However, because the SQLite index is stored on disk alongside the data, this improvement also increased the file size by 33% from [150MB] to [210MB]. DuckDB also improved significantly with ordered data but to a smaller degree and surprisingly required additional space to do so, likely due to the reordering resulting in a different compression strategy (Figure XX). Parquet files had the smallest improvement upon data ordering but remained the same small size they were when unordered.
 
-Crucially, these improvements also persisted when multiple files were stored in a single database. We built databases consisting of between 1 and 100 individual MS files and tested the time required to extract ion chromatograms from each after an index was constructed (Figure XX, left panel). DuckDB was consistently the fastest ion chromatogram extraction method, with query times around 0.03 seconds for a single file and 1 second for one hundred files. SQLite had much higher variance and slower extraction times with datasets consisting of more than one file, typically an order of magnitude slower than DuckDB, while Parquet fell between the two. Importantly, only DuckDB had a slope significantly less than one. This is what would be expected if the database was performing a simple binary search on the index, with an expected time efficiency of O(log(# of files)). However, DuckDB's performance degrades at larger database sizes and approaches a 1:1 slope, possibly due to the overhead of reading large amounts of data into memory after it's found. We additionally compared these values to the timings obtained from converting each file into its own database and looping over each of those to confirm the linearity of that response (Figure XX, right panel). Interestingly, SQLite timings were slightly better with multiple database files (Figure XX, bottom panel) instead of one combined database.
+Crucially, these improvements also persisted when multiple files were stored in a single database. We built databases consisting of between 1 and 100 individual MS files and tested the time required to extract ion chromatograms from each after an index was constructed (Supplemental fig XX). DuckDB was consistently the fastest ion chromatogram extraction method, with query times around 0.03 seconds for a single file and 1 second for one hundred files. SQLite had much higher variance and slower extraction times with datasets consisting of more than one file, typically an order of magnitude slower than DuckDB, while Parquet fell between the two. Importantly, only DuckDB had a slope significantly less than one. This is what would be expected if the database was performing a simple binary search on the index, with an expected time efficiency of O(log(# of files)). However, DuckDB's performance degrades at larger database sizes and approaches a 1:1 slope, possibly due to the overhead of reading large amounts of data into memory after it's found. We additionally compared these values to the timings obtained from converting each file into its own database and looping over each of those to confirm the linearity of that response (Figure XX). Interestingly, SQLite timings were slightly better with multiple database files instead of one combined database (Figure XX).
 
 ```{r}
-idx_gp <- read_csv("data/idx_ord_times.csv") %>%
-  mutate(file_size=ifelse(method=="Parquet", file_size-1, file_size)) %>%
-  ggplot() +
-  geom_boxplot(aes(x=file_size/1e6, y=time, color=method), position=position_identity(), width=10, fill="transparent") +
-  scale_y_log10() +
-  labs(x="Database size (MB)", y="Time (seconds)", color=NULL) +
-  theme_bw() +
-  theme(legend.position="inside", legend.justification.inside = c(0, 0),
-        legend.background = element_rect(color="black")) +
-  guides(color=guide_legend(nrow=2))
+timelabs <- c("0.01 seconds", "0.1 seconds", "One second", "Ten seconds", "One minute")
 
-
-multifile_data <- read_csv("data/multifile_times.csv") %>%
-  mutate(type=factor(type, levels=c("multifile", "singlefile"),
+read_csv("data/multifile_timings.csv") %>%
+  mutate(type=factor(type, levels=c("consolidated", "multifile"),
                      labels=c("Single database", "One database per MS file"))) %>%
   mutate(method=factor(method, levels=c("sqlite", "duckdb", "parquet"),
                        labels=c("SQLite", "DuckDB", "Parquet"))) %>%
-  mutate(n_file_fact=factor(n_files, levels=c(1, 3, 10, 30, 100), 
-                        labels=c("One file", "3 files", "10 files", 
-                                "30 files", "100 files")))
-
-multifile_data %>%
-  select(method, n_files, time, type) %>%
-  mutate(n_files=log10(n_files), time=log10(time)) %>%
-  nest(data=c(n_files, time)) %>%
-  mutate(lmfit=map(data, ~broom::tidy(lm(.x$time~.x$n_files, offset = .x$n_files)))) %>%
-  unnest(lmfit) %>%
-  filter(term!="(Intercept)")
-
-xdb_gp <- multifile_data %>%
-  ggplot(aes(x=n_files, y=time, color=method, fill=method)) +
-  geom_abline(slope = 1, intercept = -5:3) +
-  geom_smooth(method="lm", formula=y~x, position=position_dodge(width=0.2), fill="grey50") +
-  geom_point(position=position_dodge(width=0.2), color="black", pch=21) +
-  facet_wrap(~type, nrow=1) +
-  scale_y_log10() +
-  scale_x_log10() +
-  # scale_color_manual(breaks = method_names, values=method_colors, aesthetics = c("color", "fill")) +
-  scale_color_viridis_d(aesthetics = c("color", "fill"), begin = 0.2, end = 0.8) +
-  labs(x="Number of files", y="Time (seconds)", color=NULL, fill=NULL) +
+  mutate(db_sort=factor(db_sort, levels = c("ordered", "unordered"),
+                        labels = c("With index/ordering", "No index/ordering"))) %>%
+  ggplot(aes(x=size, y=time, color=type, fill=type, shape=db_sort)) +
+  geom_point(alpha=0.5) +
+  # stat_summary(fun.data = mean_se, geom = "errorbar", linewidth=1.2) +
+  stat_summary(fun = mean, geom = "line", linewidth=1.2) +
+  stat_summary(fun = mean, geom = "point", size=3, color="black") +
+  facet_wrap(~method) +
+  scale_y_log10(breaks=c(0.01, 0.1, 1, 10, 60), labels=timelabs) +
+  scale_x_log10(labels = scales::label_bytes()) +
+  scale_color_viridis_d(option = "A", begin = 0.4, end = 0.8, aesthetics = c("fill", "color")) +
+  scale_shape_manual(breaks=c("With index/ordering", "No index/ordering"), values=c(21, 22)) +
+  labs(x="Database size", y="Time taken", color=NULL, fill=NULL, shape=NULL) +
   theme_bw() +
-  theme(legend.position="inside", legend.justification.inside = c(0.05, 0.95),
-        legend.background = element_rect(color="grey80"))
-
-xmeth_gp <- multifile_data %>%
-  ggplot() +
-  geom_boxplot(aes(x=n_file_fact, y=time, color=type)) +
-  facet_wrap(~method, nrow=1) +
-  scale_y_log10() +
-  scale_color_viridis_d(option = "A", begin = 0.4, end = 0.8) +
-  theme_bw() +
-  labs(x="Number of files", y="Time (seconds)", color="Database type") +
-  theme(legend.position="top")
-
-idx_gp + (xdb_gp/xmeth_gp + plot_layout(heights = c(2,1)))
-ggsave("figures/multifile_fig.png", width = 10.5, height=7)
+  theme(legend.position = "top", legend.direction = "vertical")
+ggsave("figures/multifile_fig.png", width = 6.5, height=3.5)
 ```
 
 ![](figures/multifile_fig.png)
