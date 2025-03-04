@@ -68,7 +68,7 @@ for mz_i in top_masses:
                             time_vals = timeit.repeat(rep_function, globals=globals(), number=1, repeat=1)
                             multifile_time+=time_vals[0]
                         time_data = pd.DataFrame({"method":db_name, "mz_target":mz_i, "n_files":n_files,
-                                                  "type":db_type, "db_sort":db_sort, "time":time_vals})
+                                                  "type":db_type, "db_sort":db_sort, "time":[multifile_time]})
                         multifile_timings.append(time_data)
                     else:
                         output_db = f"E:/mzsql/MTBLS10066/consolidated_{n_files}{file_ending}"
