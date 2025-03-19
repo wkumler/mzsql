@@ -9,13 +9,17 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 This repository implements "vanilla" SQL databases for the efficient storage and access of raw mass-spectrometry (MS) data. Here, "raw" MS data refers to the data encoded in vendor or .mzML files and contains coordinates of retention time, m/z ratio, and intensity.
 
+![](README_files/figure-manual-manuscript/db_fig.png)
+
 Existing data formats fail to provide intuitive, rapid, and programmatic search of raw MS data and require learning the quirks and conceits of idiosyncratic file formats. Databases have consistent and transferrable syntax for queries, indexing and binary search for rapid data extraction, benefit from multi-file aggregations of data, can store processed data alongside, and are established as an industry standard.
+
+![](README_files/figure-manual-manuscript/singlefile_fig.png)
+
+*Comparison of existing MS file types in query timing and size on disk. Six different queries were tried here: extracting an MS1 or MS2 scan (A and D), a chromatogram (B), all data points within a retention time range (C), or fragment/precursor data (E and F). Thirteen different parsers were implemented in Python for this comparison, visible in the manuscript_things branch of this repository.*
 
 ## Convert mzML files into a database via the converters above
 
-Converters from mzML to SQLite and DuckDB are currently available in the [converters folder](converters) for R and Python with Julia and C++ hopefully soon. Code from the associated script can be directly copied and pasted into your workflow, though you're responsible for managing the dependency installations.
-
-The database format is shown in the graphic below:
+Converters from mzML to SQLite and DuckDB are currently available in the [converters folder](converters) for R with Python, Julia, and C++ hopefully soon. Code from the associated script can be directly copied and pasted into your workflow, though you're responsible for managing the dependency installations.
 
 ### Convert from mzML to DuckDB using R:
 
@@ -202,7 +206,8 @@ library(ggplot2)
 ggplot(pre_data, aes(x=premz, y=int)) +
   geom_point() +
   geom_segment(aes(xend=premz, yend=0)) +
-  facet_wrap(~filename, ncol=1)
+  facet_wrap(~filename, ncol=1) +
+  scale_y_log10()
 ```
 
 </details>
@@ -256,3 +261,7 @@ DBInterface.close!(conn)
 </details>
 
 ## Other README things
+
+-----
+
+README last built on `r Sys.Date()`
