@@ -56,10 +56,12 @@ turn_mzml_sqlite <- function(ms_files, outfile, ordered=NULL){
   return(outfile)
 }
 
+
+# Example usage:
 ms_files <- list.files("demo_data", pattern = "mzML", full.names = TRUE)
 turn_mzml_sqlite(ms_files, "demo_data/msdata.duckdb")
 
-
+# Example chromatogram extraction
 library(DBI)
 pmppm <- function(mass, ppm)c(mass * (1 - ppm/1e+06), mass * (1 + ppm/1e+06))
 
