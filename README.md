@@ -34,10 +34,11 @@ the dependency installations.
 
 ### Convert from mzML to DuckDB using R:
 
-Ensure `RaMS`, `DBI`, and `duckdb`/`RSQLite` are all installed from
-CRAN.
+Some simple demo code shown below for MS1 and MS2 table creation to
+illustrate what the converters do:
 
 ``` r
+# Ensure `RaMS`, `DBI`, and `duckdb`/`RSQLite` are all installed from CRAN.
 library(RaMS)
 msdata <- grabMSdata(list.files("demo_data", pattern = "mzML", full.names = TRUE))
 
@@ -71,7 +72,7 @@ pmppm <- function(mass, ppm)c(mass * (1 - ppm/1e+06), mass * (1 + ppm/1e+06))
 
 conn <- dbConnect(RSQLite::SQLite(), "demo_data/msdata.sqlite")
 # conn <- dbConnect(duckdb::duckdb(), "demo_data/msdata.duckdb")
-chr_statement <- "SELECT * FROM MS1 WHERE mz BETWEEN ? AND ?"
+chr_statement <- "SELECT * FROM MS1 WHERE mz BETWEEN ? AND ? ORDER BY filename, rt"
 chrom <- dbGetQuery(conn, chr_statement, params=pmppm(118.0865, 10))
 dbDisconnect(conn)
 plot(chrom$rt, chrom$int, type = "l")
