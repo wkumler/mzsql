@@ -3,7 +3,7 @@ library(tidyverse)
 library(RaMS)
 
 # Write imzML data to Arrow for R ----
-# 10.1007/s00216-012-5841-x
+# dx.doi.org/10.1007/s00216-012-5841-x
 # Maybe also https://www.ebi.ac.uk/metabolights/editor/MTBLS313/descriptors?
 library(Cardinal)
 msi_files <- list.files("imzml_data", pattern = ".imzML", full.names = TRUE)[1:3]
@@ -35,7 +35,7 @@ lapply(all_msi, function(df_i){
 
 # Write ms3 data to DuckDB for Python ----
 # https://www.metabolomicsworkbench.org/data/DRCCStudySummary.php?Mode=SetupRawDataDownload&StudyID=ST001661
-# 10.1021/acs.analchem.0c04895
+# dx.doi.org/10.1021/acs.analchem.0c04895
 library(DBI)
 ms3_files <- list.files("ms3_data", pattern = "mzML", full.names = TRUE)
 new_grabMzmlMS3 <- function (xml_data, rtrange, file_metadata, incl_polarity) {
