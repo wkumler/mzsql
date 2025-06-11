@@ -230,34 +230,152 @@ data.frame(
 
 ```{r supp fig 1 gtables, eval=FALSE}
 library(gt)
-# data.frame(
-#   filename=c("Smp_A", "Smp_A", "Smp_Z", "Smp_Z"),
-#   scan_num=c(1,1,651501,651501),
-#   rt=c(0.10, 0.10, 12.37, 12.37),
-#   dt=c(),
-#   mz=c(60.0452, 60.0532, 60.0456, 60.0531),
-#   int=c(6618, 2657, 158084, 4673)
-# ) %>%
-#   gt() %>%
-#   cols_label(filename=html("filename</br><small>Source file</small>"),
-#              scan_num=html("scan_num</br><small>Scan number</small>"),
-#              rt=html("rt</br><small>Retention time</small>"), 
-#              mz=html("mz</br><small><emph>m/z</emph> ratio</small>"), 
-#              int=html("int</br><small>Intensity</small>")) %>%
-#   tab_row_group(label = "...millions of additional entries...", rows = rt>=mean(rt)) %>%
-#   tab_row_group(label = "", rows = rt<=mean(rt)) %>%
-#   tab_style(style = cell_text(align = "center"), locations = cells_row_groups()) %>%
-#   opt_table_outline() %>%
-#   tab_style(cell_borders(sides = c("left", "right")), locations = cells_body()) %>%
-#   cols_align(align = "center") %>%
-#   cols_move_to_start("filename") %>%
-#   tab_options(row_group.padding = 3) %>%
-#   tab_header(title = "Table: MS1") %>%
-#   tab_style(style = cell_text(align = "left"), locations = cells_title()) %>%
-#   gtsave(filename = "figures/ms1_table.png", vwidth=1000)
+data.frame(
+  filename=c("Smp_A", "Smp_A", "Smp_Z", "Smp_Z"),
+  scan_num=c(1,1,651501,651501),
+  rt=c(0.10, 0.10, 12.37, 12.37),
+  dt=c(0.07, 0.07, 6.16, 6.16),
+  mz=c(60.0452, 60.0532, 60.0456, 60.0531),
+  int=c(6618, 2657, 158084, 4673)
+) %>%
+  gt() %>%
+  cols_label(filename=html("filename</br><small>Source file</small>"),
+             scan_num=html("scan_num</br><small>Scan number</small>"),
+             rt=html("rt</br><small>Retention time</small>"),
+             dt=html("dt</br><small>Drift time</small>"),
+             mz=html("mz</br><small><emph>m/z</emph> ratio</small>"),
+             int=html("int</br><small>Intensity</small>")) %>%
+  tab_row_group(label = "...billions of additional entries...", rows = rt>=mean(rt)) %>%
+  tab_row_group(label = "", rows = rt<=mean(rt)) %>%
+  tab_style(style = cell_text(align = "center"), locations = cells_row_groups()) %>%
+  opt_table_outline() %>%
+  tab_style(cell_borders(sides = c("left", "right")), locations = cells_body()) %>%
+  cols_align(align = "center") %>%
+  cols_move_to_start("filename") %>%
+  tab_options(row_group.padding = 3) %>%
+  tab_header(title = "Table: MS1") %>%
+  tab_style(style = cell_text(align = "left"), locations = cells_title()) %>%
+  gtsave(filename = "figures/ionmob_table.png", vwidth=1000)
+
+data.frame(
+  filename=c("Smp_A", "Smp_A", "Smp_Z", "Smp_Z"),
+  scan_num=c(1,1,651501,651501),
+  x_coord=c(1, 1, 678, 678),
+  y_coord=c(1, 1, 327, 327),
+  mz=c(60.0452, 60.0532, 60.0456, 60.0531),
+  int=c(6618, 2657, 158084, 4673)
+) %>%
+  gt() %>%
+  cols_label(filename=html("filename</br><small>Source file</small>"),
+             scan_num=html("scan_num</br><small>Scan number</small>"),
+             x_coord=html("x_coord</br><small>X coordinate</small>"),
+             y_coord=html("y_coord</br><small>Y coordinate</small>"),
+             mz=html("mz</br><small><emph>m/z</emph> ratio</small>"),
+             int=html("int</br><small>Intensity</small>")) %>%
+  tab_row_group(label = "...millions of additional entries...", rows = x_coord>=mean(x_coord)) %>%
+  tab_row_group(label = "", rows = x_coord<=mean(x_coord)) %>%
+  tab_style(style = cell_text(align = "center"), locations = cells_row_groups()) %>%
+  opt_table_outline() %>%
+  tab_style(cell_borders(sides = c("left", "right")), locations = cells_body()) %>%
+  cols_align(align = "center") %>%
+  cols_move_to_start("filename") %>%
+  tab_options(row_group.padding = 3) %>%
+  tab_header(title = "Table: MS1") %>%
+  tab_style(style = cell_text(align = "left"), locations = cells_title()) %>%
+  gtsave(filename = "figures/imaging_table.png", vwidth=1000)
+
+
+
+data.frame(
+  filename=c("Smp_A", "Smp_A", "Smp_Z", "Smp_Z"),
+  scan_num=c(1,1,23338,23338),
+  rt=c(0.10, 0.10, 12.37, 12.37),
+  rt_cor=c(0.10, 0.10, 13.5, 13.5)
+) %>%
+  gt() %>%
+  cols_label(filename=html("filename</br><small>Source file</small>"),
+             scan_num=html("scan_num</br><small>Scan number</small>"),
+             rt=html("rt</br><small>Retention time</small>"),
+             rt_cor=html("rt_cor</br><small>Corrected RT</small>")) %>%
+  tab_row_group(label = "...additional entries...", rows = rt>=mean(rt)) %>%
+  tab_row_group(label = "", rows = rt<=mean(rt)) %>%
+  tab_style(style = cell_text(align = "center"), locations = cells_row_groups()) %>%
+  opt_table_outline() %>%
+  tab_style(cell_borders(sides = c("left", "right")), locations = cells_body()) %>%
+  cols_align(align = "center") %>%
+  cols_move_to_start("filename") %>%
+  tab_options(row_group.padding = 3) %>%
+  tab_header(title = "Table: rt_cor") %>%
+  tab_style(style = cell_text(align = "left"), locations = cells_title()) %>%
+  gtsave(filename = "figures/rtcor_table.png", vwidth=1000)
+
+data.frame(
+  filename=c("Smp_A", "Smp_A", "Smp_Z", "Smp_Z"),
+  feature=c("FT0001", "FT0002", "FT2311", "FT2312"),
+  rt_min=c(6.5, 12.1, 23.7, 29.5),
+  rt_max=c(7.6, 13.0, 25.0, 30.6),
+  mz_min=c(118.0862, 76.0760, 231.1005, 254.0325),
+  mz_max=c(118.0865, 76.0762, 231.1006, 254.0328),
+  peak_area=c(1104948, 1729482, 7953192, 2397.9),
+  quality=c(0.97, 0.87, 0.88, 0.24)
+) %>%
+  gt() %>%
+  cols_label(filename=html("filename</br><small>Source file</small>"),
+             feature=html("feature</br><small>Feature</small>"),
+             rt_min=html("rt_min</br><small>Min peak RT</small>"),
+             rt_max=html("rt_max</br><small>Max peak RT</small>"),
+             mz_min=html("mz_min</br><small>Min peak m/z</small>"),
+             mz_max=html("mz_max</br><small>Max peak m/z</small>"),
+             peak_area=html("peak_area</br><small>Area</small>"),
+             quality=html("qscore</br><small>Quality</small>")) %>%
+  tab_row_group(label = "...additional entries...", rows = rt_min>=mean(rt_min)) %>%
+  tab_row_group(label = "", rows = rt_min<=mean(rt_min)) %>%
+  tab_style(style = cell_text(align = "center"), locations = cells_row_groups()) %>%
+  opt_table_outline() %>%
+  tab_style(cell_borders(sides = c("left", "right")), locations = cells_body()) %>%
+  cols_align(align = "center") %>%
+  cols_move_to_start("filename") %>%
+  tab_options(row_group.padding = 3) %>%
+  tab_header(title = "Table: chrom_peaks") %>%
+  tab_style(style = cell_text(align = "left"), locations = cells_title()) %>%
+  gtsave(filename = "figures/peak_table.png", vwidth=1000)
+
+data.frame(
+  feature=c("FT0001", "FT0002", "FT2311", "FT2312"),
+  name=c("Valine", "TMAO", "Unknown", "Unknown"),
+  formula=c("C5H11NO2", "C3H9NO", "NA", "NA"),
+  rt=c(6.5, 12.1, 23.7, 29.5),
+  mz=c(118.0862, 76.0760, 231.1005, 254.0325),
+  avg_area=c(1104948, 1729482, 7953192, 2397.9),
+  med_snr=c(8.79, 7.80, 1.72, 3.19),
+  med_qscore=c(0.97, 0.87, 0.88, 0.24)
+) %>%
+  gt() %>%
+  cols_label(feature=html("feature</br><small>Feature</small>"),
+             name=html("name</br><small>Feature ID</small>"),
+             formula=html("formula</br><small>Formula</small>"),
+             rt=html("rt</br><small>Retention time</small>"),
+             mz=html("mz</br><small>m/z</small>"),
+             avg_area=html("avg_area</br><small>Average area</small>"),
+             med_snr=html("med_snr</br><small>Median SNR</small>"),
+             med_qscore=html("med_qscore</br><small>Median quality</small>")) %>%
+  tab_row_group(label = "...additional entries...", rows = rt>=mean(rt)) %>%
+  tab_row_group(label = "", rows = rt<=mean(rt)) %>%
+  tab_style(style = cell_text(align = "center"), locations = cells_row_groups()) %>%
+  opt_table_outline() %>%
+  tab_style(cell_borders(sides = c("left", "right")), locations = cells_body()) %>%
+  cols_align(align = "center") %>%
+  cols_move_to_start("feature") %>%
+  tab_options(row_group.padding = 3) %>%
+  tab_header(title = "Table: features") %>%
+  tab_style(style = cell_text(align = "left"), locations = cells_title()) %>%
+  gtsave(filename = "figures/feature_table.png", vwidth=1000)
+
 ```
 
-*Supplemental figure 1: [TBD] Additional possible extensions to the database schema for retention time correction, feature detection and correspondence, ion mobility, and imaging.*
+![](figures/supp_db_fig.png)
+
+*Supplemental figure 1: Additional possible extensions to the database schema for retention time correction, feature detection and correspondence, ion mobility, and imaging.*
 
 ## Time and space testing
 
@@ -588,7 +706,7 @@ ggsave("figures/multifile_fig.png", width = 6.5, height=3.5)
 
 As the gap between data scientist and mass spectrometrist continues to narrow, mass spectrometry (MS) data formats should facilitate this convergence. Instead, MS software remains relatively opaque. Documentation is sparse and data structures are complex, resulting in a landscape that is essentially restricted to the original developer's intent. A particular pain point is the way in which MS data is stored because current methods must make trade-offs between simplicity, size, and speed. When we explored the wide range of MS file readers, we found every method had flaws that interfered with widespread adoption. The mzML file type appears to represent low-hanging fruit, with its XML-based structure that sacrifices speed and size in favor of clarity, but no alternative has yet reached a large audience of active users. Fifteen years of active competition continue to favor the highly explicit format, likely because users are leery of incomprehensible alternatives with no guarantee of continued maintenance.
 
-Certain methods are clear winners for individual use cases but all of the existing formats failed to perform well at the full suite of exploratory data analysis tasks we attempted. Scan extraction is perhaps the most widely used query, especially for proteomics, and as a result has been extensively optimized. Here, MZA was blazingly fast thanks to the decision to index in the HDF5 file by scan number. The mzML files used here did have a precompiled index that should have made scan extraction highly efficient but this appeared to be mitigated for pyopenms and pyteomics due to their long initialization times, though pymzml performed very well at this task and the other two mzML methods were much faster after initialization (Supplemental Figure 1).
+Certain methods are clear winners for individual use cases but all of the existing formats failed to perform well at the full suite of exploratory data analysis tasks we attempted. Scan extraction is perhaps the most widely used query, especially for proteomics, and as a result has been extensively optimized. Here, MZA was blazingly fast thanks to the decision to index in the HDF5 file by scan number. The mzML files used here did have a precompiled index that should have made scan extraction highly efficient but this appeared to be mitigated for pyopenms and pyteomics due to their long initialization times, though pymzml performed very well at this task and the other two mzML methods were much faster after initialization (Supplemental Figure 2).
 
 However, performant scan-based methods struggled significantly with chromatogram extraction because these axes are inherently orthogonal to each other. Here, mzDB performed quite well and was competitive with the specifically optimized mzTree and mzMD formats and pyopenms performed incredibly well when extracting multiple chromatograms via its 2DPeak method. Chromatograms (and retention time range queries) are of course only relevant for chromatography-based workflows but this type of analysis has become increasingly popular and we expect it to continue to do so, making ion extraction increasingly important. None of the existing MS formats we tested performed very well on MS/MS data, despite the growing availability of fragmentation data, though our use-case is oriented more towards exploration instead of comprehensive analysis.
 
