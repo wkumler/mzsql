@@ -1,9 +1,7 @@
 ---
 title: "Databases are an effective and efficient method for storage and access of mass-spectrometry data"
 author:
-  - William Kumler
-  - Sam LaRue
-  - Anitra E. Ingalls
+  William Kumler, Sam LaRue, Anitra E. Ingalls
 output: 
   word_document:
     reference_docx: template.docx
