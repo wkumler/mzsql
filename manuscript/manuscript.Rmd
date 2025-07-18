@@ -27,8 +27,6 @@ method_colors <- c("#393B79", "#5254A3", "#6B6ECF", "#9C9EDE",
 
 ```
 
-https://researcher-resources.acs.org/publish/author_guidelines?coden=jprobs
-
 # Abstract
 
 Current mass spectrometry (MS) data formats lack accessibility, interoperability, and performance. This study evaluates 10 recent MS file formats and readers across several exploratory MS analysis metrics and compares them to a simple database representation implemented in SQLite, DuckDB, and Parquet. We found that most existing formats severely lack the documentation required for adoption and that no existing format offers a balanced combination of speed, storage space, and simplicity. In contrast, our data storage schema improved data discovery and extraction by multiple orders of magnitude with minimal overhead. We argue that these database systems offer a performant and transparent way to store MS data for exploratory analysis while reducing technical debt and allowing mass spectrometrists to leverage recent advances in data science as our own computational complexity continues to grow.
