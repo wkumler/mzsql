@@ -6,6 +6,9 @@ storage and access of raw mass-spectrometry (MS) data. Here, “raw” MS
 data refers to the data encoded in vendor or .mzML files and contains
 coordinates of retention time, m/z ratio, and intensity.
 
+> [!NOTE]  
+> For code, figures, and the reproducible document used in the manuscript, see the [manuscript_things](https://github.com/wkumler/mzsql/tree/manuscript_things) branch.
+
 ![](README_files/figure-manual-manuscript/db_fig.png)
 
 Existing data formats fail to provide intuitive, rapid, and programmatic
