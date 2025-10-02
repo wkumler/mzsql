@@ -4,6 +4,7 @@ import pandas as pd
 import pyteomics.mzml
 import pyopenms
 import pymzml
+from packaging.version import Version
 from .helpers import pmppm
 
 # pyteomics things
@@ -162,7 +163,10 @@ def get_chrom_mzml_pyopenms_2DPeak(file, mz, ppm):
     pyopenms.MzMLFile().load(file, exp)
     exp.updateRanges()
     mzmin, mzmax = pmppm(mz, ppm)
-    chrom_data=exp.get2DPeakDataLong(min_mz=mzmin, max_mz=mzmax, min_rt=exp.getMinRT(), max_rt=exp.getMaxRT())
+    if Version(pyopenms.__version__) == "3.4.0":
+        chrom_data=exp.get2DPeakDataLong(min_mz=mzmin, max_mz=mzmax, min_rt=exp.getMinRT(), max_rt=exp.getMaxRT(), ms_level=1)
+    else:
+        chrom_data=exp.get2DPeakDataLong(min_mz=mzmin, max_mz=mzmax, min_rt=exp.getMinRT(), max_rt=exp.getMaxRT())
     if len(chrom_data)>0:
         return(pd.DataFrame({"rt":chrom_data[0], "mz":chrom_data[1], "int":chrom_data[2]}))
     
@@ -221,7 +225,10 @@ def get_rtrange_mzml_pyopenms_2DPeak(file, rtstart, rtend):
     exp = pyopenms.MSExperiment()
     pyopenms.MzMLFile().load(file, exp)
     exp.updateRanges()
-    rtrange_data=exp.get2DPeakDataLong(min_mz=exp.getMinMZ(), max_mz=exp.getMaxMZ(), min_rt=rtstart*60, max_rt=rtend*60)
+    if Version(pyopenms.__version__) == "3.4.0":
+        rtrange_data=exp.get2DPeakDataLong(min_mz=exp.getMinMZ(), max_mz=exp.getMaxMZ(), min_rt=rtstart*60, max_rt=rtend*60, ms_level=1)
+    else:
+        rtrange_data=exp.get2DPeakDataLong(min_mz=exp.getMinMZ(), max_mz=exp.getMaxMZ(), min_rt=rtstart*60, max_rt=rtend*60)
     if len(rtrange_data)>0:
         return(pd.DataFrame({"rt":rtrange_data[0], "mz":rtrange_data[1], "int":rtrange_data[2]}))
 
