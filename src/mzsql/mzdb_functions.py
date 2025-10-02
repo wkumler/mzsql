@@ -77,13 +77,15 @@ def get_chrom_mzdb(file, mz, ppm):
     AND begin_mz = ?
     """
     bb_dataframe = pd.read_sql(bb_query, connection, params=(bb_id_for_chrom,))
-    unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
-    bb_chrom = pd.concat(unpacked_bb_list).merge(scanid_rt_pd)
-    bb_chrom["rt"] /= 60
-
     connection.close()
-    
-    return(bb_chrom[(mzmin < bb_chrom["mz"]) & (bb_chrom["mz"] < mzmax)])
+    unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
+
+    if len(unpacked_bb_list)>0:
+        bb_chrom = pd.concat(unpacked_bb_list).merge(scanid_rt_pd)
+        bb_chrom["rt"] /= 60
+        return(bb_chrom[(mzmin < bb_chrom["mz"]) & (bb_chrom["mz"] < mzmax)])
+    else:
+        return(None)
 
 def get_spec_mzdb(file, scan_num):
     """
@@ -108,11 +110,14 @@ def get_spec_mzdb(file, scan_num):
     """
     
     bb_dataframe = pd.read_sql(bb_query, connection, params=(bb_id_for_scan,))
-    unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
-    bb_spec = pd.concat(unpacked_bb_list)
-
     connection.close()
-    return(bb_spec[bb_spec["scan_id"]==scan_num])
+
+    unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
+    if len(unpacked_bb_list)>0:
+        bb_spec = pd.concat(unpacked_bb_list)
+        return(bb_spec[bb_spec["scan_id"]==scan_num])
+    else:
+        return(None)
 
 def get_rtrange_mzdb(file, rtstart, rtend):
     """
@@ -138,12 +143,14 @@ def get_rtrange_mzdb(file, rtstart, rtend):
     AND spectrum.time BETWEEN ? AND ?
     """
     bb_dataframe = pd.read_sql(bb_query, connection, params=(rtstart*60, rtend*60))
-    unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
-    rtrange_data = pd.concat(unpacked_bb_list).merge(scanid_rt_pd)
-    rtrange_data = rtrange_data[(rtrange_data["rt"] > rtstart*60) & (rtrange_data["rt"] < rtend*60)]
-
     connection.close()
-    return(rtrange_data)
+    unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
+    if len(unpacked_bb_list)>0:
+        rtrange_data = pd.concat(unpacked_bb_list).merge(scanid_rt_pd)
+        rtrange_data = rtrange_data[(rtrange_data["rt"] > rtstart*60) & (rtrange_data["rt"] < rtend*60)]
+        return(rtrange_data)
+    else:
+        return(None)
 
 
 def parse_mzDB_premz_string(precursor_xml):
@@ -169,14 +176,17 @@ def get_MS2scan_mzdb(mzdb_file, spectrum_idx):
     """
     
     bb_dataframe = pd.read_sql(bb_query, connection, params=(str(bb_id_for_scan),))
-    unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
-    bb_spec = pd.concat(unpacked_bb_list)
-    bb_spec.columns = ["fragmz", "int", "scan_id"]
-    scan_data = bb_spec[bb_spec["scan_id"]==spectrum_idx+1]
-    scan_data["premz"] = premz_val
-    
     connection.close()
-    return(scan_data)
+
+    unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
+    if len(unpacked_bb_list)>0:
+        bb_spec = pd.concat(unpacked_bb_list)
+        bb_spec.columns = ["fragmz", "int", "scan_id"]
+        scan_data = bb_spec[bb_spec["scan_id"]==spectrum_idx+1]
+        scan_data["premz"] = premz_val
+        return(scan_data)
+    else:
+        return(None)
 
 def get_MS2premz_mzdb(mzdb_file, precursor_mz, ppm_acc):
     connection = sqlite3.connect(mzdb_file)
@@ -193,12 +203,14 @@ def get_MS2premz_mzdb(mzdb_file, precursor_mz, ppm_acc):
     """.format(','.join(chosen_scans["bb_first_spectrum_id"]))
     
     bb_dataframe = pd.read_sql(bb_query, connection)
-    unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
-    bb_spec = pd.concat(unpacked_bb_list)
-    bb_spec.columns = ["fragmz", "int", "scan_id"]
-    
     connection.close()
-    return(bb_spec)
+    unpacked_bb_list = [unpack_raw_bb(bb_data) for bb_data in bb_dataframe["data"]]
+    if len(unpacked_bb_list)>0:
+        bb_spec = pd.concat(unpacked_bb_list)
+        bb_spec.columns = ["fragmz", "int", "scan_id"]
+        return(bb_spec)
+    else:
+        return(None)
 
 def get_MS2fragmz_mzdb(mzdb_file, fragment_mz, ppm_acc):
     connection = sqlite3.connect(mzdb_file)
@@ -221,8 +233,9 @@ def get_MS2fragmz_mzdb(mzdb_file, fragment_mz, ppm_acc):
         frag_data.columns = ["fragmz", "int", "scan_id"]
         frag_data["premz"] = premz_vals[index]
         scan_dfs.append(frag_data)
-    spectrum_data = pd.concat(scan_dfs)
-    return(spectrum_data)
+    if len(scan_dfs)>0:
+        spectrum_data = pd.concat(scan_dfs)
+        return(spectrum_data)
 
 def get_MS2nloss_mzdb(mzdb_file, neutral_loss, ppm_acc):
     connection = sqlite3.connect(mzdb_file)
@@ -245,6 +258,7 @@ def get_MS2nloss_mzdb(mzdb_file, neutral_loss, ppm_acc):
         frag_data.columns = ["fragmz", "int", "scan_id"]
         frag_data["premz"] = premz_vals[index]
         scan_dfs.append(frag_data)
-    spectrum_data = pd.concat(scan_dfs)
-    return(spectrum_data)
+    if len(scan_dfs)>0:
+        spectrum_data = pd.concat(scan_dfs)
+        return(spectrum_data)
 
