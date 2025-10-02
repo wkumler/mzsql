@@ -163,7 +163,7 @@ def get_chrom_mzml_pyopenms_2DPeak(file, mz, ppm):
     pyopenms.MzMLFile().load(file, exp)
     exp.updateRanges()
     mzmin, mzmax = pmppm(mz, ppm)
-    if Version(pyopenms.__version__) == "3.4.0":
+    if Version(pyopenms.__version__) == Version("3.4.0"):
         chrom_data=exp.get2DPeakDataLong(min_mz=mzmin, max_mz=mzmax, min_rt=exp.getMinRT(), max_rt=exp.getMaxRT(), ms_level=1)
     else:
         chrom_data=exp.get2DPeakDataLong(min_mz=mzmin, max_mz=mzmax, min_rt=exp.getMinRT(), max_rt=exp.getMaxRT())
@@ -225,7 +225,7 @@ def get_rtrange_mzml_pyopenms_2DPeak(file, rtstart, rtend):
     exp = pyopenms.MSExperiment()
     pyopenms.MzMLFile().load(file, exp)
     exp.updateRanges()
-    if Version(pyopenms.__version__) == "3.4.0":
+    if Version(pyopenms.__version__) == Version("3.4.0"):
         rtrange_data=exp.get2DPeakDataLong(min_mz=exp.getMinMZ(), max_mz=exp.getMaxMZ(), min_rt=rtstart*60, max_rt=rtend*60, ms_level=1)
     else:
         rtrange_data=exp.get2DPeakDataLong(min_mz=exp.getMinMZ(), max_mz=exp.getMaxMZ(), min_rt=rtstart*60, max_rt=rtend*60)
