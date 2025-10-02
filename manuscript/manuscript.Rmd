@@ -96,6 +96,13 @@ java -Dsun.java2d.d3d=false -Dsun.java2d.opengl=false -jar java_things\mzMD-java
 
 E:
 cd mzsql\MTBLS10066
+# Manually copy over files via FileZilla or other FTP client
+ftp://ftp.ebi.ac.uk/pub/databases/metabolights/studies/public/MTBLS10066
+# Pull over all raw files in FILES/RAW_FILES/POS (all 225 of them)
+
+
+mkdir 20220923_LEAP-POS_QC04
+cd 20220923_LEAP-POS_QC04
 
 # After adding msconvert, raw2mzdb, and mza executables to PATH:
 msconvert 20220923_LEAP-POS_QC04.raw --filter "peakPicking true 1-"
@@ -104,7 +111,34 @@ msconvert 20220923_LEAP-POS_QC04.raw --mz5 --filter "peakPicking true 1-"
 # Needs full path or it crashes on startup?
 "C:\Program Files\ProteoWizard\raw2mzDB_0.9.10_build20170802\raw2mzDB.exe" -i 20220923_LEAP-POS_QC04.raw  -c 1-2 --safeMode
 mza -file 20220923_LEAP-POS_QC04.raw
+
+# Repeat for
+20220929_LEAP-POS_BL14B
+20220923_LEAP-POS_S036
+20230303_LEAP02_B2_POS_S054
+20221001_LEAP-POS_QC20
+
 ```
+
+```{r}
+cwd <- getwd()
+setwd("E:/mzsql/MTBLS10066")
+for(file_i in c("20220923_LEAP-POS_QC04",
+                "20220929_LEAP-POS_BL14B", "20220923_LEAP-POS_S036",
+                "20230303_LEAP02_B2_POS_S054", "20221001_LEAP-POS_QC20")){
+  system(paste("mkdir", file_i))
+  system(paste0("cp ", file_i, ".raw ", file_i))
+  setwd(file_i)
+  system(paste0("msconvert ", file_i, '.raw --filter "peakPicking true 1-"'))
+  system(paste0("msconvert --mzMLb ", file_i, '.raw --filter "peakPicking true 1-"'))
+  system(paste0("msconvert --mz5 ", file_i, '.raw --filter "peakPicking true 1-"'))
+  system(paste0('"C:\\Program Files\\ProteoWizard\\raw2mzDB_0.9.10_build20170802\\raw2mzDB.exe" -i ', file_i, '.raw  -c 1-2 --safeMode'))
+  system(paste0('mza -file ', file_i, '.raw'))
+  setwd("..")
+}
+setwd(cwd)
+```
+
 
 ## Database schema
 
