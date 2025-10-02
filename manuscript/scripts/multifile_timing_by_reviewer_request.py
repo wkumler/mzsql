@@ -64,7 +64,7 @@ init_sizes = pd.DataFrame(columns=["method", "file_size", "filename"])
 init_sizes.to_csv("data/multifile_sizes.csv", index=False)
 
 
-for i, basename in enumerate(basenames):
+for basename_index, basename in enumerate(basenames):
     print(basename)
     # 20220923_LEAP-POS_QC04
     
@@ -182,7 +182,8 @@ for i, basename in enumerate(basenames):
     sizedata["filename"] = basename
     sizedata.to_csv("data/multifile_sizes.csv", index=False, mode="a", header=False)
 
-    if i < 4:
-        input(f"Swap the mzTree and mzMD files to {basenames[i+1]}")
+    print(basename_index)
+    if basename_index < 4:
+        input(f"Swap the mzTree and mzMD files to {basenames[basename_index+1]}")
 
 print("Success!")
