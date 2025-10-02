@@ -18,9 +18,7 @@ dependencies = [
     "mzapy",
     "lxml",
     "pyarrow",
-    "mzapy",
-    "time",
-    "timeit"
+    "mzapy"
 ]
 
 [build-system]
