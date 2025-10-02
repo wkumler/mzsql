@@ -277,8 +277,8 @@ Querying the MS1 and MS2 tables was also very straightforward. After establishin
 The simplest and most abundantly documented query was the extraction of a single spectrum. In many ways, this is the fundamental unit of mass spectrometry and thus many formats are highly optimized for its extraction into manipulable data (Figure 2A and 2D). Here, we found that the mzML and mzMLb file types were consistently the slowest to parse and required multiple seconds, likely highlighting inefficiencies in the `pyteomics` package used to parse both file types. `pyopenms` also struggled to open and extract a specific scan, requiring several seconds due in large part to the expensive initiation function, after which requests were orders of magnitude faster (Supplemental Figure 2). It is also worth noting that while both of these packages provided rapid extraction of a *random* spectrum, a significant overhead was introduced by needing to scan through the file to find a *specific* spectrum by scan number. Scans are not always consecutive and no metadata was obviously available that would have allowed using the index directly to a specific scan number.
 
 ```{r singlefile_fig}
-all_timings <- read_csv("data/singlefile_times.csv") %>% 
-  print(n=Inf)
+all_timings <- read_csv("data/multifile_times.csv") %>% 
+  # print(n=Inf)
   mutate(method=str_replace(method, "pyopenms_2DPeak", "2DPeak")) %>%
   mutate(method=factor(method, levels=method_names)) %>%
   mutate(query=factor(query, levels=c("ms1_spec", "chrom", "rtrange",
@@ -286,7 +286,7 @@ all_timings <- read_csv("data/singlefile_times.csv") %>%
                       labels=c("A. Full scan", "B. Chromatogram", "C. RT Range",
                                "D. MS/MS scan", "E. Precursor search",
                                "F. Fragment search")))
-all_sizes <- read_csv("data/file_sizes.csv") %>%
+all_sizes <- read_csv("data/multifile_sizes.csv") %>%
   mutate(method=str_replace(method, "pyopenms_2DPeak", "2DPeak")) %>%
   mutate(method=factor(method, levels=method_names))
 
@@ -309,7 +309,7 @@ size_barplot <- all_sizes %>%
   mutate(query="G. File size") %>%
   ggplot() +
   geom_hline(yintercept = 0) +
-  geom_col(aes(x=method, y=file_size/1e6, fill=method), color="black") +
+  geom_boxplot(aes(x=method, y=file_size/1e6, fill=method), color="black") +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
   scale_fill_manual(breaks = c("mzML", method_names), 
                     values=c("#393B79", method_colors)) +
@@ -328,7 +328,7 @@ ggsave("figures/singlefile_fig.png", width = 6.5, height=5)
 
 ![](figures/singlefile_fig.png)
 
-*Figure 2: Query time for the six data extraction methods and the associated file sizes for all 13 methods explored in this paper. The left six panels show boxplots representing the time required in seconds to extract a full scan spectrum (A), an ion chromatogram (B), all data within a retention time range (C), an MS/MS scan (D), the fragments of a specified precursor (E), and all precursors with a specified fragment (F). The error in the boxplot is composed of timing information for 10 repeated queries, each of a different target scan number, retention time (RT), or m/z. The right panel (G) shows a barplot of the size on disk in megabytes (MB) occupied by each file type.*
+*Figure 2: Query time for the six data extraction methods and the associated file sizes for all 13 methods explored in this paper. The left six panels show boxplots representing the time required in seconds to extract a full scan spectrum (A), an ion chromatogram (B), all data within a retention time range (C), an MS/MS scan (D), the fragments of a specified precursor (E), and all precursors with a specified fragment (F). The error in the boxplot is composed of timing information for 10 repeated queries across 5 different randomly chosen files, each of a different target scan number, retention time (RT), or m/z. The right panel (G) shows a boxplot of the size on disk in megabytes (MB) occupied by each file type.*
 
 The `pymzml` package was able to extract both MS^1^ and MS^2^ spectra from the mzML file nearly two orders of magnitude faster than the other mzML parsers, largely due to its use of naming the scans by their number and thus avoiding the expensive scan number extraction step. mzDB had the only notable difference between MS^1^ and MS^2^ scans, performing slightly better than `pyteomics` and `pyopenms` methods for MS^1^ data and significantly better for MS^2^ data, placing it approximately on par with `pymzml` in taking about a tenth of a second. The simple database methods (SQLite, DuckDB, and Parquet) also fell in this ~0.1 second range, with SQLite performing most poorly and DuckDB ~10x faster. Finally, both mz5 and MZA were an additional order of magnitude faster than any other method, returning the data within the spectrum in thousandths of a second. This shows the power of the HDF5 file system for data access when its location within the file is known in advance.
 

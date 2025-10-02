@@ -10,7 +10,11 @@ import timeit
 from mzsql import *
 
 random.seed(123)
-basename=random.sample(glob.glob("E:/mzsql/MTBLS10066/*.mzML"), 1)[0].replace(".mzML", "").replace("\\", "/")
+basename_sample=random.sample(glob.glob("E:/mzsql/MTBLS10066/*.mzML"), 5)[0:5]
+basenames = [file_i.replace(".mzML", "").replace("\\", "/") for file_i in basename_sample]
+basenames = [f"{file_i}/{file_i.replace('E:/mzsql/MTBLS10066/', '')}" for file_i in basenames]
+
+basename = basenames[0]
 print(basename)
 # 20220923_LEAP-POS_QC04
 
