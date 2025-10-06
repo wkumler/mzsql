@@ -362,7 +362,7 @@ ggsave("figures/singlefile_fig.png", width = 6.5, height=5)
 
 ![](figures/singlefile_fig.png)
 
-*Figure 2: Query time for the six data extraction methods and the associated file sizes for all 13 methods explored in this paper. The left six panels show boxplots representing the time required in seconds to extract a full scan spectrum (A), an ion chromatogram (B), all data within a retention time range (C), an MS/MS scan (D), the fragments of a specified precursor (E), and all precursors with a specified fragment (F). The error in the boxplot is composed of timing information for 10 repeated queries across 5 different randomly chosen files, each of a different target scan number, retention time (RT), or m/z. The right panel (G) shows a boxplot of the size on disk in megabytes (MB) occupied by each file type.*
+*Figure 2: Query time for the six data extraction methods and the associated file sizes for all 13 methods explored in this paper. The left six panels show boxplots representing the time required in seconds to extract a full scan spectrum (A), an ion chromatogram (B), all data within a retention time range (C), an MS/MS scan (D), the fragments of a specified precursor (E), and all precursors with a specified fragment (F). The error in the boxplot is composed of timing information for 10 repeated queries for each of 5 different randomly chosen files, each of a different target scan number, retention time (RT), or m/z. The right panel (G) shows a boxplot of the size on disk in megabytes (MB) occupied by each file type.*
 
 The `pymzml` package was able to extract both MS^1^ and MS^2^ spectra from the mzML file nearly two orders of magnitude faster than the other mzML parsers, largely due to its use of naming the scans by their number and thus avoiding the expensive scan number extraction step. mzDB had the only notable difference between MS^1^ and MS^2^ scans, performing slightly better than `pyteomics` and `pyopenms` methods for MS^1^ data and significantly better for MS^2^ data, placing it approximately on par with `pymzml` in taking about a tenth of a second. The simple database methods (SQLite, DuckDB, and Parquet) also fell in this ~0.1 second range, with SQLite performing most poorly and DuckDB ~10x faster. Finally, both mz5 and MZA were an additional order of magnitude faster than any other method, returning the data within the spectrum in thousandths of a second. This shows the power of the HDF5 file system for data access when its location within the file is known in advance.
 
@@ -679,7 +679,7 @@ data.frame(
 
 ```
 
-![](figures/supp_db_fig.png)
+![](figures/supp_1_db_fig.png)
 
 *Supplemental figure 1: Additional possible extensions to the database schema for retention time correction, feature detection and correspondence, ion mobility, and imaging.*
 
@@ -732,8 +732,59 @@ ggsave("figures/supp_2_preload_fig.png", width = 6.5, height=5)
 
 *Supplemental figure 2: Timing information with and without pre-loading the object into Python prior to extraction. Panel A) shows the number of seconds required to extract a scan for the three mzML parsers plus the mzMLb, MZA, and mz5 file types. Panel B) shows the number of seconds required for pyopenms to perform each of the queries if the initial data load was removed from the timing count. Error bars show 3x replicate queries of 5x different targets.*
 
+```{r singlefile_laptop_ILC_comparison}
+ILC_timings <- read_csv("data/singlefile_times.csv") %>% 
+  # print(n=Inf)
+  mutate(method=str_replace(method, "pyopenms_2DPeak", "2DPeak")) %>%
+  mutate(method=factor(method, levels=method_names)) %>%
+  mutate(query=factor(query, levels=c("ms1_spec", "chrom", "rtrange",
+                                      "ms2_spec", "premz", "fragmz"),
+                      labels=c("A. Full scan", "B. Chromatogram", "C. RT Range",
+                               "D. MS/MS scan", "E. Precursor search",
+                               "F. Fragment search"))) %>%
+  mutate(machine="Desktop (96 GB RAM, Intel Xeon @2.67 GHz)")
 
-```{r supp fig 3 multichrom}
+laptop_timings <- read_csv("data/singlefile_times_laptop.csv") %>% 
+  # print(n=Inf)
+  mutate(method=str_replace(method, "pyopenms_2DPeak", "2DPeak")) %>%
+  mutate(method=factor(method, levels=method_names)) %>%
+  mutate(query=factor(query, levels=c("ms1_spec", "chrom", "rtrange",
+                                      "ms2_spec", "premz", "fragmz"),
+                      labels=c("A. Full scan", "B. Chromatogram", "C. RT Range",
+                               "D. MS/MS scan", "E. Precursor search",
+                               "F. Fragment search"))) %>%
+  mutate(machine="Laptop (16 GB RAM, Intel Core i7 @1.90GHz)")
+
+laptop_desktop_ratios_gp <- bind_rows(ILC_timings, laptop_timings) %>% 
+  mutate(machine=c("desktop", "laptop")[as.numeric(factor(machine))]) %>%
+  pivot_wider(names_from = "machine", values_from="time") %>%
+  mutate(ratio=log2(desktop/laptop)) %>%
+  ggplot() +
+  geom_vline(xintercept = 0) +
+  geom_point(aes(x=ratio, y=method, color=method)) +
+  facet_wrap(~query) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+laptop_desktop_comp_gp <- bind_rows(ILC_timings, laptop_timings) %>%
+  ggplot() +
+  geom_boxplot(aes(x=method, y=time, color=method)) +
+  facet_grid(query~machine) +
+  scale_y_log10(breaks=c(0.001, 0.01, 0.1, 1, 10), labels=as.character(c(0.001, 0.01, 0.1, 1, 10))) +
+  scale_color_manual(breaks = method_names, values=method_colors) +
+  labs(x=NULL, y="Time (seconds)", color=NULL) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0.5),
+        legend.position = "none",
+        strip.text.x = element_text(hjust = 0))
+
+ggsave("figures/supp_3_desktop_laptop_comp.png", width = 6.5, height=8)
+```
+
+*Supplemental figure 3: Comparison between an older desktop machine with 96 gigabytes (GB) of RAM and a newer desktop with 16 GB for a single DDA file. Desktop numbers are reproduced from Figure 2 using the same single file as used for the laptop. The panel rows show boxplots representing the time required in seconds to extract a full scan spectrum (A), an ion chromatogram (B), all data within a retention time range (C), an MS/MS scan (D), the fragments of a specified precursor (E), and all precursors with a specified fragment (F). The error in the boxplot is composed of timing information for 10 repeated queries for a single randomly chosen file, each of a different target scan number, retention time (RT), or m/z, just as in Figure 2.*
+
+
+```{r supp fig 4 multichrom}
 multichrom_times <- read_csv("data/multichrom_times.csv")
 multichrom_baseline_df <- multichrom_times %>%
   mutate(method=str_replace(method, "pyopenms_2DPeak", "2DPeak")) %>%
@@ -755,14 +806,14 @@ multichrom_times %>%
   labs(x="Number of chromatograms extracted", y="Time required (seconds)") +
   theme_bw() +
   theme(legend.position = "none")
-ggsave("figures/supp_3_multichrom_facets.png", width = 6.5, height=5)
+ggsave("figures/supp_4_multichrom_facets.png", width = 6.5, height=5)
 ```
 
-![](figures/supp_3_multichrom_facets.png)
+![](figures/supp_4_multichrom_facets.png)
 
-*Supplemental figure 3: Data from main text Figure 3 with independent y-axes showing scatter plots of the time required to extract multiple chromatograms using various methods on logarithmic axes. Best-fit linear models have been added for each method and are shown behind triplicate timing measurements, while the black line shows a 1:1 slope intercepting the first data point to show nonlinear behavior with additional chromatograms. Transparent intervals around each best-fit line show a single standard error of the mean.*
+*Supplemental figure 4: Data from main text Figure 3 with independent y-axes showing scatter plots of the time required to extract multiple chromatograms using various methods on logarithmic axes. Best-fit linear models have been added for each method and are shown behind triplicate timing measurements, while the black line shows a 1:1 slope intercepting the first data point to show nonlinear behavior with additional chromatograms. Transparent intervals around each best-fit line show a single standard error of the mean.*
 
-```{r supp fig 4 dbloopjoin}
+```{r supp fig 5 dbloopjoin}
 type_labels = c("<span style='color:#a41118'>For loop</span>", 
                "<span style='color:#f4bb23'>Unified query</span>",
                "<span style='color:#147C8F'>Non-equi join</span>")
@@ -790,9 +841,9 @@ read_csv("data/dbloopjoinuni_times.csv") %>%
         legend.text=element_markdown(),
         plot.title.position = "plot", 
         plot.caption.position =  "plot")
-ggsave("figures/supp_4_dbloopjoinuni.png", width = 6.5, height=3)
+ggsave("figures/supp_5_dbloopjoinuni.png", width = 6.5, height=3)
 ```
 
-![](figures/supp_4_dbloopjoinuni.png)
+![](figures/supp_5_dbloopjoinuni.png)
 
-*Supplemental figure 4: Scatter showing time required to extract chromatograms from SQLite, DuckDB, and Parquet databases using different methods denoted by color. Ten replicates are shown for each data point.*
+*Supplemental figure 5: Scatter showing time required to extract chromatograms from SQLite, DuckDB, and Parquet databases using different methods denoted by color. Ten replicates are shown for each data point.*
