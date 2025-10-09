@@ -396,6 +396,52 @@ File size is another important constraint on the efficacy of various MS formats.
 
 However, these comparisons are not perfect because not all files store exactly the same data. MzTree and mzMD appear to entirely lack the MS/MS information in the sample DDA file, representing a potentially significant size reduction that's difficult to estimate though the extraction of the same file via `msconvert` containing only MS^1^ scans was 58 MB, a 23% size reduction. The SQLite, DuckDB, and Parquet formats also lack the extensive scan and file metadata that's present in the other file types, though it is difficult to estimate the fraction of disk space allocated for this (and which will depend upon the precise definition of metadata).
 
+### Memory use and hardware support
+
+We then reran the same tests for a single file on a laptop with 16 gigabytes of memory and more modern CPU (Intel Core i7) and software (Windows 11 Home) to determine whether our specific setup was a factor in the benchmarks we obtained. Laptop timings were consistently about twice as fast as those obtained on the desktop (Supplemental Figure 3), indicating that memory availability was not a major factor and that more modern hardware may be more important in determining query times. We were also able to use this as an opportunity to test the robustness of our installation and found that we could not easily reproduce the exact environment used on the desktop due to incompatibility between a more modern version of HDF5 and the version of h5py used to interface with the mz5 files. However, installation of pyopenms was much smoother on more modern hardware with AVX support and we were able to use modern versions of both Python and numpy for the laptop rerun, though breaking changes in the arguments required by the 2DPeak method required rewriting some code. All other installation processes were functionally identical between the two machines.
+
+```{r laptop_v_desktop_timings, eval=FALSE}
+ILC_timings <- read_csv("data/singlefile_times.csv") %>% 
+  # print(n=Inf)
+  mutate(method=str_replace(method, "pyopenms_2DPeak", "2DPeak")) %>%
+  mutate(method=factor(method, levels=method_names)) %>%
+  mutate(query=factor(query, levels=c("ms1_spec", "chrom", "rtrange",
+                                      "ms2_spec", "premz", "fragmz"),
+                      labels=c("A. Full scan", "B. Chromatogram", "C. RT Range",
+                               "D. MS/MS scan", "E. Precursor search",
+                               "F. Fragment search"))) %>%
+  mutate(machine="Desktop (96 GB RAM, Intel Xeon @2.67 GHz)")
+
+laptop_timings <- read_csv("data/singlefile_times_laptop.csv") %>% 
+  # print(n=Inf)
+  mutate(method=str_replace(method, "pyopenms_2DPeak", "2DPeak")) %>%
+  mutate(method=factor(method, levels=method_names)) %>%
+  mutate(query=factor(query, levels=c("ms1_spec", "chrom", "rtrange",
+                                      "ms2_spec", "premz", "fragmz"),
+                      labels=c("A. Full scan", "B. Chromatogram", "C. RT Range",
+                               "D. MS/MS scan", "E. Precursor search",
+                               "F. Fragment search"))) %>%
+  mutate(machine="Laptop (16 GB RAM, Intel Core i7 @1.90GHz)")
+
+bind_rows(ILC_timings, laptop_timings) %>% 
+  mutate(machine=c("desktop", "laptop")[as.numeric(factor(machine))]) %>%
+  pivot_wider(names_from = "machine", values_from="time") %>%
+  # mutate(ratio=desktop/laptop) %>% summarise(ratio=mean(ratio), .by=c(query, method)) %>% 
+  # arrange(method) %>% print(n=Inf)
+  mutate(ratio=log2(desktop/laptop)) %>%
+  ggplot() +
+  geom_vline(xintercept = 0) +
+  geom_point(aes(x=ratio, y=method, color=method)) +
+  facet_wrap(~query) +
+  theme_bw() +
+  theme(legend.position = "none")
+```
+
+
+
+
+
+
 ## Timings for multiple chromatograms
 
 The single-file, single-metric case discussed above and shown in Figure 2 is largely a worst-case scenario for many MS data systems that have a slow initial setup step to make downstream analysis faster. To compare these systems more fairly to our database schema, we also tested timings across multiple chromatograms. In each case, this was implemented as a for loop iterating over an increasing number of chromatograms corresponding to the largest intensity ions in the file (Figure 3).
