@@ -10,8 +10,9 @@ csl: journal-of-proteome-research.csl
 
 William Kumler^1^, Sam LaRue^2^, Anitra E. Ingalls^1^* (aingalls\@uw.edu)
 
-^1^ University of Washington, School of Oceanography [Address]
-^2^ University of Washington, [Mechanical Engineering]
+^1^ University of Washington, School of Oceanography, 1501 NE Boat St, Seattle, WA 98195
+
+^2^ University of Washington, Department of Mechanical Engineering, 3900 E Stevens Way NE, Seattle, WA 98195
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, include=FALSE, eval=FALSE)
@@ -948,3 +949,5 @@ dbDisconnect(conn)
 ```
 
 ![](figures/TOC_fig.png)
+
+For TOC only
