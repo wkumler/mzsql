@@ -1,7 +1,5 @@
 ---
-title: "Databases are an effective and efficient method for storage and access of mass-spectrometry data"
-author:
-  William Kumler, Sam LaRue, Anitra E. Ingalls* (aingalls@uw.edu)
+title: "Storing mass-spectrometry data in simple databases enables flexible and intuitive exploration without time or space penalties"
 output: 
   word_document:
     reference_docx: template.docx
@@ -9,6 +7,11 @@ bibliography:
 - Exported Items.bib
 csl: journal-of-proteome-research.csl
 ---
+
+William Kumler^1^, Sam LaRue^2^, Anitra E. Ingalls^1^* (aingalls\@uw.edu)
+
+^1^ University of Washington, School of Oceanography [Address]
+^2^ University of Washington, [Mechanical Engineering]
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, include=FALSE, eval=FALSE)
