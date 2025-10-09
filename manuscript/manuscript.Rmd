@@ -857,3 +857,49 @@ ggsave("figures/supp_5_dbloopjoinuni.png", width = 6.5, height=3)
 ![](figures/supp_5_dbloopjoinuni.png)
 
 *Supplemental figure 5: Scatter showing time required to extract chromatograms from SQLite, DuckDB, and Parquet databases using different methods denoted by color. Ten replicates are shown for each data point.*
+
+# TOC figure
+
+```{r TOC, eval=FALSE}
+library(mzml2db)
+# mzml2db("../demo_data/180205_Poo_TruePoo_Full1.mzML", db_engine = duckdb::duckdb(), db_name = "../demo_data/180205_Poo_TruePoo_Full1.duckdb")
+
+library(DBI)
+conn <- dbConnect(duckdb::duckdb(), "../demo_data/180205_Poo_TruePoo_Full1.duckdb")
+
+chrom_fig <- dbGetQuery(conn, "SELECT * FROM MS1 WHERE mz BETWEEN 118.086 AND 118.087") %>%
+  mutate(int=int/1e8) %>%
+  RaMS::qplotMS1data() +
+  theme_bw() +
+  labs(y=NULL, x=NULL) +
+  theme(text=element_text(size=8), axis.ticks.length = unit(0.01, "in"))
+ggsave(plot = chrom_fig, "figures/TOC_chrom.png", width = 1.5, height=0.85)
+
+spec_fig <- dbGetQuery(conn, "SELECT * FROM MS1 WHERE scan_idx = 1000") %>%
+  filter(mz<300) %>%
+  mutate(int=int/1e6) %>%
+  ggplot(aes(x=mz, y=int)) +
+  geom_segment(aes(xend=mz, yend=0)) +
+  geom_point() +
+  theme_bw() +
+  labs(y=NULL, x=NULL) +
+  theme(text=element_text(size=8),  axis.ticks.length = unit(0.01, "in"))
+ggsave(plot = spec_fig, "figures/TOC_spec.png", width = 1.5, height=0.85)
+
+rt_fig <- dbGetQuery(conn, "SELECT * FROM MS1 WHERE rt BETWEEN 7 AND 8") %>%
+  filter(mz<119.5) %>%
+  filter(mz>115) %>%
+  arrange(int) %>%
+  ggplot(aes(x=rt, y=mz, color=log10(int))) +
+  geom_point(alpha=0.8) +
+  theme_bw() +
+  theme(legend.position="none", text=element_text(size=8), 
+        axis.ticks.length = unit(0.01, "in")) +
+  scale_color_viridis_c() +
+  labs(y=NULL, x=NULL)
+ggsave(plot = rt_fig, "figures/TOC_rtrange.png", width = 1.8, height=1)
+
+dbDisconnect(conn)
+```
+
+![](figures/TOC_fig.png)
