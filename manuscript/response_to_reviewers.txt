@@ -1,0 +1,365 @@
+
+Still to do:
+Abstract graphic legend and formatting and feedback
+Combine supp figures into single PDF
+Format Supp Info figure legends
+Double check references?
+
+
+> 
+> Request for Formatting Changes
+> 
+> • Manuscript title page: 
+> 1) Author list:  Use standardized asterisk symbol (*) to mark name of 
+> corresponding author
+Done.
+
+> 2) Author affiliations: Place under author list; Use superscript numbers to 
+> match authors to affiliations
+Done.
+
+> 3) Include email address for corresponding author
+Done. 
+
+> • Key Words:  Provide up to 10 Key words (place after Abstract section)
+Done.
+
+> • Funding sources must be listed in both the manuscript and in Paragon Plus
+Done.
+
+> • Table of Contents Graphic (TOC) also referred to as “Abstract graphic” is 
+> required for all papers. A well-designed TOC should give the reader a quick 
+> visual representation of the essence of the paper without providing details. 
+> Specific rules apply to the TOC that do not to other manuscript graphics; please 
+> make corrections, as needed:
+> - The TOC must be entirely original artwork, 100% created by authors ONLY, and 
+> unpublished.
+> - Size should be approximately 3 inches x 3 inches (all images combined) as it 
+> is intended to be a very small graphic. Exact specifications are attached, along 
+> with examples of correctly sized TOCs.
+> - Label as "For TOC Only" on same page as graphic, and combine as last page of 
+> the manuscript (do not number as a figure, or include a legend).
+
+
+> 
+> • References:    Before submitting your revised paper, check all references to 
+> ensure the following:
+> - Number of in-text citations match number of references at the end of the paper 
+> - Each source is numbered separately (that is, multiple sources are not combined 
+> within a single numbered reference.)
+> - All references are cited at least once, and there are no duplicates
+> - Complete bibliographic information is provided for each reference. DOI may be 
+> included but NOT used instead of this information unless it is not available, 
+> such as for preprints or recently accepted papers which have not yet received 
+> issue placement. 
+> The ACS Guide to Scholarly Communication contains detailed information required 
+> for each type of reference. The following list includes needed information for 
+> the most commonly seen types:
+> -Journal articles: Author names, article title, source, year, and first page.
+> -Articles not yet published and missing required information should be labeled 
+> “in press”. 
+> -Books: Author or editor names, book title, publisher name, and year.
+> -Websites: URL and date of access (month and year minimum but day included is 
+> preferred).
+> -Patents: Author names, title of patent, patent number including office code, 
+> and year.
+> -Theses: Author name, title, institution name, and year.
+> -Preprints: Author names, title of article, name of repository (section name, 
+> if provided)*, submission date, DOI or URL (accessed YYYY-MM-DD).  *An example 
+> of repository with section name would be: arXiv (Physics.Atomic and Molecular 
+> Clusters)
+> -Conferences/Reports: Authors, paper or chapter title, book or proceedings 
+> title, publisher, and year.
+Done.
+
+> 
+> • Supporting information:
+> 1) Remove supporting figures S1- S4 from the manuscript - Supporting materials 
+> must be provided as separate file, uploaded to Paragon Plus using file 
+> designation, “Supporting information for publication”
+> Figures should be combined into a single PDF with legends placed on the same 
+> page as each figure.
+> The first page of the file should be a supporting information cover page: 
+> Include title of the primary article, the authors’ names and affiliations, and 
+> a table of contents listing all supporting materials.
+> 2) A list of supporting material in the main manuscript is required. List each 
+> material by name and brief caption. Format as example:
+> SUPPORTING INFORMATION:
+> The following supporting information is available free of charge at ACS website 
+> http://pubs.acs.org
+> Figure  S1.     < add brief caption>
+> 
+> 
+> -----------------------------------------
+> For Additional guidance, please refer to JPR Author Guidelines
+> https://researcher-resources.acs.org/publish/author_guidelines?coden=jprobs*data_requirements
+> 
+> Reviewer(s)' Comments to Author:
+> 
+> Reviewer: 1
+> 
+> Comments to the Author
+> Kumler and colleagues present an evaluation of competing open formats for mass 
+> spectrometry (MS) data, ultimately making a case for moving toward SQL as the 
+> optimal base format for storing and accessing MS data. The authors perform a 
+> fairly comprehensive assessment of existing open MS data formats, benchmarking 
+> performance attributes including data file size and access times for various 
+> relevant operations that underly typical data processing workflows. While the 
+> discussion in the present work is centered around DDA LC-MS/MS data, there are 
+> aspects of the performance characteristics that can be expected to translate to 
+> other data types as well. In addition to benchmarking existing open formats, the 
+> authors characterize proof of principle SQL based MS data architectures, 
+> detailing their unique advantages. Overall, the present work is responsive to 
+> ongoing discussions in the field around the need for better open MS data formats 
+> and makes a compelling case for use of relational databases as a foundational 
+> technology to store MS data. The evaluation strategy employed in the present 
+> work is mostly sound (subject to some reservations, discussed below), and the 
+> conclusions are generally well-supported by the results and well-conveyed in the 
+> text. I suggest publication of this work, subject to revision addressing some 
+> concerns outlined below.
+> 
+We appreciate the detailed review and support for this work. The additional 
+considerations raised by the reviewer have been responded to individually below.
+
+>  - (page 5, lines 154-155) The authors mention that they did 
+> not monitor memory usage and assume that memory usage was never a constraint. 
+> With the testing being performed on a system with 96 GB of RAM I should hope 
+> memory was never a constraint. This system configuration is probably 
+> significantly more capable in this regard than most desktops that are routinely 
+> used for MS data analysis which in this reviewer's estimation are more 
+> realistically in the 16-32 GB range. Though the authors seem to be working with 
+> some relatively small MS data files in the present work, on a less capable 
+> system and with some larger data files memory footprint may become a significant 
+> limitation. This would be particularly the case for formats which extensively 
+> leverage mechanisms such as precomputed indices in order to speed up access. 
+> With these nuances in mind, I think memory footprint deserves a bit more 
+> discussion as a point of comparison for these formats, and addition of some 
+> explicit testing to the presented results would be much appreciated.
+> 
+We have added a new supplemental figure (Supp Fig 3) where we performed the same
+tests on a laptop with 16GB RAM and found very few differences between the
+desktop and the laptop timings, confirming our expectation that memory was not
+a major constraint for these queries. We have also added some discussion of this
+topic to the results and discussion sections.
+
+>  - The testing procedure (page 5, lines 143-155) seems to imply 
+> use of a single data file for the testing presented in Figure 2. If that is the
+> case, then the significance of the performance benchmarking results is 
+> significantly hindered. The benchmarking ought to be performed across multiple 
+> raw data files and aggregated, in order to account for variability of data 
+> characteristics between data files and rule out any contributions therefrom. 
+> If multiple data files were used for the benchmarking, then the text should 
+> clarified to better convey that information.
+> 
+This was correct, we did initially only use a single randomly chosen data file
+for the timing tests (though many files were queried during development). We
+have since run the same tests on 5 randomly chosen files instead and collated
+their size and timing information into Figure 2, expanding the number of data
+points per boxplot from 10 to 50. As highlighted in the text, this was not
+initially done because of the point-and-click interfaces of mzTree and mzMD that
+require manually switching files after each set of timing and therefore breaking
+proper reproducibility but we agree that this is a necessary improvement.
+
+> - Minimal methodological information should be included for the data that 
+> is used for the benchmarking datasets. More specifically: details that describe 
+> the chromatography, the MS instrumentation used (and therefore, mass resolving 
+> power), and relevant MS data acquisition parameters should be included as these 
+> all influence the characteristics of the benchmarking data and can impact the 
+> benchmarking tests.
+> 
+Done.
+
+> - I caution against the framing of the current state of the field as being 
+> attributable to technological illiteracy/ignorance, as comes across in the 
+> statement "[...] mass spectrometry data scientists are re-solving problems that 
+> have been more elegantly ironed out by dedicated teams in computer science and 
+> industry with much more extensive support" (page 19, lines 604-606) and more 
+> broadly throughout the Discussion section. This implication ignores the domain-
+> specific constraints that have shaped the development of MS data formats up to 
+> today's current state. A later paragraph in the discussion (page 19, lines 
+> 620-632) rightly makes the qualifying statement: "[...] to claim that existing 
+> frameworks should be discarded in favor of a novel method is to ignore decades 
+> of discussion", and this more measured tone would be appreciated in other parts 
+> of the Discussion. It is also worth noting that the testing performed in the 
+> present work, and therefore the proported benefits of relational databases, are 
+> really only directly applicable in the context of DIA LC-MS/MS data. This 
+> represents a fairly narrow aperture for MS data relative to the breadth of 
+> instrumentation, acquisition methods, and experimental applications in current 
+> use. The extent to which the conclusions from the present work apply within 
+> these other contexts remains to be evaluated.
+> 
+We appreciate the caution outlined here and shared by Reviewer 2 and have
+extensively reworked the manuscript to emphasize the role that databases can
+play in exploratory analysis instead of entirely replacing the existing
+alternatives which are indeed heavily optimized for various other functions.
+This is reflected in the new manuscript name, a complete replacement of several
+paragraphs in the introduction and discussion, and softening of critical
+language throughout. Thank you for bringing this to our attention.
+
+> - For sake of metadata preservation, the authors suggest that a relational 
+> database oriented MS data format should ideally be used alongside the vendor 
+> and mzML formats (page 20, line 641-644). Would it not be more convenient to 
+> extend the database schema to cover desired metadata, thus abrogating the need 
+> to maintain copies of the data in multiple separate data formats?
+> 
+While we agree that it is possible to extend the database schema to include
+metadata, we believe that the increase in complexity is not worth the additional
+information provided. We have refocused the manuscript on the role of simple 
+databases as exploratory and introductory tools instead of full replacements
+for existing structures and hope this clarifies our point here.
+
+> minor points
+> (page 18, line 593) I think "Pacific Marine Environmental Laboratory" 
+> should be "Pacific Northwest National Laboratory" based on the author's 
+> affiliations in the cited work
+> 
+Fixed, thank you.
+
+> ref added - (page 8, line 244) mzapy has an associated tech note: 
+> https://doi.org/10.1038/s42004-023-00867-9
+> 
+This reference has been added, thank you.
+
+
+> 
+> Reviewer: 2
+> 
+> Comments to the Author
+> Kumler et al. provide an account of comparing many common mass spectrometry 
+> formats used for proteomics and metabolomics, along with some tests of storing 
+> spectrum information in SQLite, DuckDB, and Parquet. The manuscript contains 
+> some interesting measurement data that might be worth publishing but much of 
+> the other narrative generally dismissive of previous efforts and compares highly 
+> complex and capable data formats against highly simplified tabular data, which 
+> will always win in a few simplistic tests. I encourage the authors to consider 
+> these points for improving their manuscript.
+> 
+We appreciate the thoughtful review and general caution against the dismissive
+language and have extensively reworked the manuscript to better clarify the
+role that we believe simple databases should play in exploratory and introductory
+MS analysis. We have also attempted to soften the excessively critical language
+throughout and are entirely open to continued feedback on areas that remain
+problematically dismissive. We will additionally note that our (intentionally)
+simple tests are nonetheless often critical pieces of MS analysis that should
+not be overlooked or made excessively complicated, and therefore should remain
+a priority for developers.
+
+> 1. A first issue with the manuscript is the general inflammatory language that 
+> casts aside decades of past effort as misguided. The opening charge of the 
+> abstract “Current mass spectrometry (MS) data formats lack accessibility, 
+> interoperability, and performance” is highly subjective, inflammatory, and not 
+> supported by any data that are presented. This field does have challenges in 
+> storing and using mass spectrometry and additional contributions will help move 
+> the field forward, but sweeping aside all complexity with overly simplistic 
+> solutions does not “reduce technical debt”.
+> 
+We agree that our first submission did not properly acknowledge the full scope
+of the problem facing MS data storage and have reworked much of the manuscript
+to mitigate the inflammatory language and instead highlight places where 
+simplicity might be desired over maximum data integrity.
+
+> 2. The second issue is that the authors present comparisons between highly 
+> complex formats that encode rich semi-structured data and metadata and a subset 
+> of data in a 7-column table as if this were a fair and meaningful comparison. 
+> It is nothing new that extracting just the information that you care about into 
+> the simplest possible format will lead to much better performance and size. This 
+> is obvious and has not escaped the notice of past workers in the field.
+> 
+We appreciate the reviewer's concern about fair comparisons between the highly
+structured formats that have been proposed elsewhere and our simplified model.
+We agree that this is a common point of discussion and believe that some of
+the rephrasing we have done in the manuscript better illustrates this as an
+endpoint in the simple-complex continuum that we and others have nonetheless
+found useful for our workflow. While this opinion is certainly shared by many
+in the field, we believe that showing data that reveals the tradeoffs such
+complex models make is still of value.
+
+> 3. The authors nearly ignore all the complexities of mass spectrometry data, 
+> including fragmentation type, ion mobility, selection windows, collision 
+> energies, instrument information, data processing provenance, DIA data, SRM 
+> chromatograms, etc. in favor of the simplest possible encoding for the simplest 
+> data. This would be okay if the authors are up front about it and clearly state 
+> that their comparison is inherently imbalanced.
+> 
+Hopefully our rephrasing makes this clearer up-front. We do believe that the
+model can handle many additional forms of data and try to illustrate this in
+Supplemental Figure 1. For example, ion mobility data is included in that figure
+with a drift time column, as is imaging information via the inclusion of x and
+y coordinates. SRM chromatograms are functionally the same as MS1 data with a
+fixed m/z value per chromatogram that nicely obeys the MS1 framework we lay out,
+while DIA data is a natural extension of DDA data where the precursors
+are well-defined instead of data dependent and neatly obeys the current DDA
+format, though we will concede that variable width inclusion windows would not
+be well conveyed in this model without the addition of another column for
+"window width" or something similar that makes SQL queries viable. Collision
+energy and type would be captured in the scan_info table we suggest in Figure 1
+and instrument information would fit neatly into the file_info table, though we
+are limited in our ability to show every possible column in the figure space
+provided. Nonetheless, we understand the reviewer's concern about this simple
+model and do not expect it to displace every use case and indeed only expect it
+to be maximally useful for exploration and have attempted to rewrite the 
+manuscript with this in mind.
+
+> 4. In several cases the authors conflate problems of the formats with tradeoffs 
+> made in existing software. The variability in performance of different software 
+> packages reading mzML clearly shows that some of these packages may sacrifice 
+> speed for overall generalizability and convenience of use (e.g. by preloading 
+> general information and metadata, incurring initial overhead). Special 
+> optimizations could probably be made in these software tools to compete more 
+> effectively for the tests presented.
+> 
+We believe that fundamental tradeoffs are problems, especially when alternatives
+that do not require making such tradeoffs are viable for a given analysis. This
+is what the manuscript attempts to illustrate. We certainly agree that existing
+packages such as the mzML parsers could be optimized for chromatogram 
+extraction or MS/MS searches. However, they are (currently) not and we hope
+that calling attention to this continues to provide value and, ideally, 
+funding or community support for contributions that enable these optimizations.
+
+> 5. Line 578. The authors state “we must note that scan number is not inherently 
+> a useful bit of information” and then “it is entirely unclear when the scan 
+> number itself would be known in isolation”. This seems surprising or perhaps I 
+> have misunderstood. Referencing specific scan numbers such as via the Universal 
+> Spectrum Identifier https://psidev.info/usi
+> seems like crucial information when supporting scientific claims directly with 
+> the spectra that support them. Perhaps the authors could reconsider or clarify 
+> what they mean here.
+> 
+This is an excellent point that we had not considered and we have removed this
+claim from the manuscript. Thank you.
+
+> 6. In the Discussion section and throughout the authors appear not to 
+> understand that mass spectrometry data can be quite complex. Nearly every 
+> sentence in the opening paragraph of the Discussion seems to promote the idea 
+> that the field has gotten things wrong for the past 20 years and if only mass 
+> spectrometrists would realize that they could strip their data down to a 
+> 7-column table, and everyone would be happier.
+> 
+While it is certainly not true that everyone would be happier with a 7-column
+table, we have found that many mass spectrometrists (especially those less
+computationally inclined) are. This manuscript is an attempt to call into
+question whether the additional complexity is always deserved from a 
+human-centered standpoint.
+
+> There may be some useful benchmark data presented here, more comprehensive than 
+> previous works, but the solutions presented by the authors do not offer a viable
+> solution to the problem that has challenged the field for many years as they 
+> claim. Stripping out only the data that the authors care about into the simplest
+> possible working format that is highly appropriate for the desired application
+> has long been common practice for some applications (some working formats only 
+> encode MS2 and drop MS1), but it does not solve the problem of a generalized 
+> format. There is an active ongoing effort within the Proteomics Standards 
+> Initiative (psidev.info) to develop a new generalized format (called mzPeak) 
+> based on Parquet, so in that sense the authors’ idea that modern data 
+> serialization mechanisms should be used is appropriate, but not new. The new 
+> format may be of interest to the authors, but its complexity may disappoint.
+>
+Agreed. We incorrectly left the reviewer (and no doubt many potential readers)
+with the impression that we were proposing a full alternative to the existing
+MS formats and have reworked the language of the manuscript, including its title,
+in order to better characterize our argument. We are grateful for the reviewer's
+acknowledgement of the comprehensive nature of our benchmark data and the likely
+use of serialized formats in the future (e.g. mzPeak and arcMS, neither of which
+were known when this project was first started) but agree that both of those
+lack the simplicity which we have found attractive in the simple database
+schema proposed.
