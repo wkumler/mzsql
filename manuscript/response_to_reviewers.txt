@@ -1,11 +1,3 @@
-
-Still to do:
-Abstract graphic legend and formatting and feedback
-Combine supp figures into single PDF
-Format Supp Info figure legends
-Double check references?
-
-
 > 
 > Request for Formatting Changes
 > 
@@ -39,7 +31,7 @@ Done.
 > with examples of correctly sized TOCs.
 > - Label as "For TOC Only" on same page as graphic, and combine as last page of 
 > the manuscript (do not number as a figure, or include a legend).
-
+Done.
 
 > 
 > • References:    Before submitting your revised paper, check all references to 
@@ -88,6 +80,8 @@ Done.
 > The following supporting information is available free of charge at ACS website 
 > http://pubs.acs.org
 > Figure  S1.     < add brief caption>
+Done.
+
 > 
 > 
 > -----------------------------------------
@@ -362,4 +356,4 @@ acknowledgement of the comprehensive nature of our benchmark data and the likely
 use of serialized formats in the future (e.g. mzPeak and arcMS, neither of which
 were known when this project was first started) but agree that both of those
 lack the simplicity which we have found attractive in the simple database
-schema proposed.
+schema proposed here.
