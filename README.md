@@ -8,6 +8,7 @@ coordinates of retention time, m/z ratio, and intensity.
 
 > [!NOTE]  
 > For code, figures, and the reproducible document used in the manuscript, see the [manuscript_things](https://github.com/wkumler/mzsql/tree/manuscript_things) branch.
+> View [the published paper](https://doi.org/10.1021/acs.jproteome.5c00721) itself on the Journal of Proteome Research website.
 
 ![](README_files/figure-manual-manuscript/db_fig.png)
 
